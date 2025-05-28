@@ -1,7 +1,7 @@
 import React from 'react';
 
-const DatePicker = ({
-  label = 'Select Date',
+const TimePicker = ({
+  label = 'Select Time',
   value,
   onChange,
   min,
@@ -17,7 +17,7 @@ const DatePicker = ({
       </label>
     )}
     <input
-      type="date"
+      type="time"
       value={value}
       onChange={onChange}
       min={min}
@@ -37,4 +37,4 @@ const DatePicker = ({
   </div>
 );
 
-export default DatePicker;
+export default TimePicker;

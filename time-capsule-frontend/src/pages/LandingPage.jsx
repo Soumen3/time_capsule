@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button'; // Adjust path if needed
-import Navbar from '../components/Layout/Navbar'; // Adjust path if needed
-import Footer from '../components/Layout/Footer'; // Adjust path if needed
 
 import HeroTimeCapsule from '../assets/illustrations/hero-time-capsule.svg'; // Adjust path if needed
+import MainLayout from '../components/Layout/MainLayout';
+import authService from '../services/auth'; // Add this import
 // Add floating animation keyframes
 const floatingCapsuleStyle = `
 @keyframes float {
@@ -19,7 +19,17 @@ const floatingCapsuleStyle = `
 `;
 
 const LandingPage = () => {
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    (async () => {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    })();
+  }, []);
+
   return (
+    <MainLayout>
     <div className="min-h-screen flex flex-col bg-gray-100 font-inter">
       {/* Inject floating animation style */}
       <style>{floatingCapsuleStyle}</style>
@@ -36,18 +46,21 @@ const LandingPage = () => {
               Schedule them to unlock and deliver at precise moments in the future,
               connecting you with tomorrow, today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/register">
-                <Button variant="primary" className="w-full sm:w-auto px-6 py-3 text-lg">
-                  Get Started - It's Free!
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" className="w-full sm:w-auto px-6 py-3 text-lg">
-                  Login
-                </Button>
-              </Link>
-            </div>
+            {/* Only show buttons if user is NOT logged in */}
+            {!user && (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/register">
+                  <Button variant="primary" className="w-full sm:w-auto px-6 py-3 text-lg">
+                    Get Started - It's Free!
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="outline" className="w-full sm:w-auto px-6 py-3 text-lg">
+                    Login
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
           <div className="md:w-1/2 flex justify-center items-center">
             {/* Hero SVG Time Capsule illustration with floating animation */}
@@ -120,6 +133,7 @@ const LandingPage = () => {
       </main>
 
     </div>
+    </MainLayout>
   );
 };
 

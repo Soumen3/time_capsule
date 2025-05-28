@@ -1,11 +1,11 @@
 import React from 'react';
 
-const DatePicker = ({
-  label = 'Select Date',
+const Textarea = ({
+  label,
   value,
   onChange,
-  min,
-  max,
+  placeholder = 'Type your message...',
+  rows = 5,
   className = '',
   error = '',
   ...props
@@ -16,19 +16,19 @@ const DatePicker = ({
         {label}
       </label>
     )}
-    <input
-      type="date"
-      value={value}
-      onChange={onChange}
-      min={min}
-      max={max}
+    <textarea
       className={`
         w-full px-4 py-3 rounded-lg border 
         focus:outline-none focus:ring-2 focus:ring-blue-400
         bg-white text-gray-900 shadow-sm
         transition duration-200
         ${error ? 'border-red-400 focus:ring-red-300' : 'border-gray-300'}
+        resize-y
       `}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={rows}
       {...props}
     />
     {error && (
@@ -37,4 +37,4 @@ const DatePicker = ({
   </div>
 );
 
-export default DatePicker;
+export default Textarea;
