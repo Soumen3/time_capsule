@@ -112,6 +112,7 @@ const authService = {
       try {
         // Make an authenticated request to a user details endpoint
         const response = await api.get('accounts/me/');
+        console.log(response);
         return response.data; // Should contain user details like { id, email, name, ... }
       } catch (error) {
         // If the token is invalid or expired, remove it and return null

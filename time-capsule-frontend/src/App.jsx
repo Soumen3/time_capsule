@@ -11,6 +11,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage'; 
 import DashboardPage from './pages/DashboardPage'; 
 import CapsuleCreatorPage from './pages/CapsuleCreatorPage'; 
+import CapsuleDetailsPage from './components/Dashboard/CapsuleDetails'; // Import CapsuleDetailsPage
 import NotFoundPage from './pages/NotFoundPage'; 
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
@@ -57,6 +58,7 @@ function App() {
 
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/create-capsule" element={<CapsuleCreatorPage />} />
+          <Route path="/capsule/:capsuleId" element={<CapsuleDetailsPage />} /> {/* Add route for capsule details */}
           
           <Route path="/" element={<LandingPage />} /> {/* Default to Landing Page */}
           <Route path="*" element={<NotFoundPage />} /> {/* Catch-all for undefined routes */}

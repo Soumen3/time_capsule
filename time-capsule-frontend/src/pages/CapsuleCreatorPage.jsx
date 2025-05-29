@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/auth'; // Adjust path if needed
+import capsuleService from '../services/capsule'; // Import the capsule service
 import MainLayout from '../components/Layout/MainLayout'; // Adjust path if needed
 import Button from '../components/Button'; // Adjust path if needed
 import Input from '../components/Input';
@@ -9,10 +10,15 @@ import Textarea from '../components/Textarea';
 import MediaUploadInput from '../components/MediaUploadInput'; // Adjust path if needed
 import DatePicker from '../components/DatePicker';
 import TimePicker from '../components/TimePicker';
+// Consider adding a Notification component for user feedback
+// import Notification from '../components/Notification';
 
 const CapsuleCreatorPage = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Page loading
+  const [isSubmitting, setIsSubmitting] = useState(false); // Form submission loading
+  const [error, setError] = useState(''); // API error message
+  const [successMessage, setSuccessMessage] = useState(''); // API success message
   const [step, setStep] = useState(1);
 
   // State for all form fields
@@ -45,18 +51,38 @@ const CapsuleCreatorPage = () => {
   }
 
   // Handle form submission on "Seal Capsule"
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e && e.preventDefault();
-    console.log({
+    setError('');
+    setSuccessMessage('');
+    setIsSubmitting(true);
+
+    const capsuleData = {
       title,
       description,
-      mediaFiles,
+      mediaFiles, // This is an array of File objects
       contentMessage,
       recipientEmail,
       deliveryDate,
       deliveryTime,
-    });
-    alert('Capsule Sealed! (Not really, backend needed)');
+    };
+
+    console.log('Submitting capsule data:', capsuleData);
+
+    try {
+      const response = await capsuleService.createCapsule(capsuleData);
+      console.log('Capsule created successfully:', response);
+      setSuccessMessage('Capsule created successfully! Redirecting...');
+      // Optionally reset form or redirect
+      setTimeout(() => {
+        navigate('/dashboard'); // Or to a page showing the created capsule
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to create capsule:', err);
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -179,6 +205,10 @@ const CapsuleCreatorPage = () => {
           <div>
             <h3 className="text-2xl font-semibold mb-4">Step 5: Review & Confirm</h3>
             <p className="text-gray-600">Review all details before sealing your capsule.</p>
+            {/* Error and Success Messages */}
+            {error && <div className="my-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">{error}</div>}
+            {successMessage && <div className="my-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded">{successMessage}</div>}
+            
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6 text-left">
               <h4 className="text-lg font-bold mb-2 text-gray-800">Capsule Summary</h4>
               {/* Title */}
@@ -187,9 +217,11 @@ const CapsuleCreatorPage = () => {
                 <span>{title || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(1)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -202,9 +234,11 @@ const CapsuleCreatorPage = () => {
                 <span>{description || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(1)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -241,9 +275,11 @@ const CapsuleCreatorPage = () => {
                 </span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(2)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -256,9 +292,11 @@ const CapsuleCreatorPage = () => {
                 <span>{contentMessage || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(2)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -271,9 +309,11 @@ const CapsuleCreatorPage = () => {
                 <span>{recipientEmail || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(3)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -286,9 +326,11 @@ const CapsuleCreatorPage = () => {
                 <span>{deliveryDate || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(4)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -301,9 +343,11 @@ const CapsuleCreatorPage = () => {
                 <span>{deliveryTime || <span className="text-gray-400">Not provided</span>}</span>
                 <div className="flex-1"></div>
                 <button
+                  type="button"
                   className="p-1 rounded hover:bg-gray-200 transition"
                   onClick={() => setStep(4)}
                   title="Edit"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V21h8"></path>
@@ -312,12 +356,13 @@ const CapsuleCreatorPage = () => {
               </div>
             </div>
             <div className="flex justify-between mt-6">
-              <Button type="button" onClick={() => setStep(4)} variant="secondary">Back</Button>
+              <Button type="button" onClick={() => setStep(4)} variant="secondary" disabled={isSubmitting}>Back</Button>
               <Button
                 type="button"
                 onClick={handleSubmit}
+                disabled={isSubmitting}
               >
-                Seal Capsule
+                {isSubmitting ? 'Sealing...' : 'Seal Capsule'}
               </Button>
             </div>
           </div>
@@ -331,6 +376,7 @@ const CapsuleCreatorPage = () => {
     <MainLayout>
       <div className="w-full max-w-3xl bg-white p-8 rounded-xl shadow-2xl text-center">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Create Your Time Capsule</h2>
+        {/* Global error/success for page level if needed, or use a notification component */}
         <div className="p-6 border border-gray-200 rounded-lg text-left">
           {renderStepContent()}
         </div>

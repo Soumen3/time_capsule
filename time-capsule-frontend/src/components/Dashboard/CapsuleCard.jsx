@@ -1,8 +1,11 @@
 // src/components/Dashboard/CapsuleCard.jsx
 import React from 'react';
 import Button from '../Button'; // Adjust path if needed
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const CapsuleCard = ({ capsule }) => {
+  const navigate = useNavigate(); // Initialize navigate
+
   // Dummy content icon based on status
   const getIcon = (status) => {
     switch (status) {
@@ -23,13 +26,22 @@ const CapsuleCard = ({ capsule }) => {
   };
 
   // Format date for display
-  const formattedDate = capsule.scheduled_delivery_date
-    ? new Date(capsule.scheduled_delivery_date).toLocaleDateString('en-US', {
+  const formattedDate = capsule.delivery_date // Use delivery_date from backend
+    ? new Date(capsule.delivery_date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       })
     : 'Not scheduled';
+
+  // Safely access privacy_status and provide a default
+  const privacyDisplay = capsule.privacy_status
+    ? capsule.privacy_status.charAt(0).toUpperCase() + capsule.privacy_status.slice(1)
+    : 'N/A';
+
+  const handleViewDetails = () => {
+    navigate(`/capsule/${capsule.id}`); // Navigate to the details page
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300 p-6 flex flex-col border border-gray-200">
@@ -48,17 +60,17 @@ const CapsuleCard = ({ capsule }) => {
       </p>
       <p className="text-gray-600 mb-4 flex items-center">
         <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v3h8z"></path></svg>
-        Privacy: {capsule.privacy_level.charAt(0).toUpperCase() + capsule.privacy_level.slice(1)}
+        Privacy: {privacyDisplay}
       </p>
       <div className="mt-auto pt-4 border-t border-gray-100 flex justify-end space-x-2">
         {capsule.status === 'draft' && (
           <Button variant="secondary" className="px-4 py-2 text-sm">Edit</Button>
         )}
         {capsule.status === 'delivered' && (
-          <Button variant="primary" className="px-4 py-2 text-sm">View Content</Button>
+          <Button variant="primary" className="px-4 py-2 text-sm" onClick={handleViewDetails}>View Content</Button>
         )}
         {capsule.status === 'sealed' && (
-          <Button variant="outline" className="px-4 py-2 text-sm">Details</Button>
+          <Button variant="outline" className="px-4 py-2 text-sm" onClick={handleViewDetails}>Details</Button>
         )}
         {/* More actions can be added based on status/permissions */}
       </div>

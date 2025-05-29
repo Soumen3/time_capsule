@@ -15,7 +15,7 @@ class CapsuleAdmin(admin.ModelAdmin):
     ordering = ('-delivery_date',)
     fieldsets = (
         (None, {
-            'fields': ('title', 'owner', 'description', 'creation_date', 'delivery_date', 'is_delivered', 'is_archived')
+            'fields': ('title', 'owner', 'description', 'creation_date', 'delivery_date', 'delivery_time', 'is_delivered', 'is_archived')
         }),
         ('Delivery Options', {
             'fields': ('delivery_method', 'privacy_status')

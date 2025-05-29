@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/auth';
+import capsuleService from '../services/capsule'; // Import capsuleService
 import MainLayout from '../components/Layout/MainLayout';
 import CapsuleList from '../components/Dashboard/CapsuleList';
 import { useNotification } from '../hooks/useNotification'; // Import useNotification
@@ -11,10 +12,13 @@ const DashboardPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userCapsules, setUserCapsules] = useState([]);
+  const [fetchError, setFetchError] = useState(''); // State for API fetch errors
   const { showNotification } = useNotification(); // Get showNotification from hook
 
   useEffect(() => {
     const checkAuthAndLoadCapsules = async () => {
+      setLoading(true);
+      setFetchError('');
       const currentUser = await authService.getCurrentUser();
       if (!currentUser) {
         navigate('/login');
@@ -22,57 +26,24 @@ const DashboardPage = () => {
       }
       setUser(currentUser);
 
-      // --- Dummy Data for Capsules (Replace with actual API call later) ---
-      const dummyCapsules = [
-        {
-          id: '1',
-          title: 'Message to my Future Self',
-          delivery_date: '2028-05-27T10:00:00Z',
-          scheduled_delivery_date: '2028-05-27T10:00:00Z',
-          status: 'sealed',
-          privacy_level: 'private',
-        },
-        {
-          id: '2',
-          title: 'Family Memories 2025',
-          delivery_date: '2043-01-01T00:00:00Z',
-          scheduled_delivery_date: '2043-01-01T00:00:00Z',
-          status: 'sealed',
-          privacy_level: 'shared',
-        },
-        {
-          id: '3',
-          title: 'My 20th Birthday Reflections',
-          delivery_date: '2025-05-15T09:00:00Z',
-          scheduled_delivery_date: '2025-05-15T09:00:00Z',
-          status: 'delivered',
-          privacy_level: 'private',
-        },
-        {
-          id: '4',
-          title: 'Dream Project Draft',
-          delivery_date: null,
-          scheduled_delivery_date: null,
-          status: 'draft',
-          privacy_level: 'private',
-        },
-        {
-          id: '5',
-          title: 'Wedding Day Wishes',
-          delivery_date: '2035-07-20T14:00:00Z',
-          scheduled_delivery_date: '2035-07-20T14:00:00Z',
-          status: 'sealed',
-          privacy_level: 'public',
-        },
-      ];
-      setUserCapsules(dummyCapsules);
-      // --- End Dummy Data ---
-
-      setLoading(false);
+      try {
+        const capsulesData = await capsuleService.getCapsules();
+        // The backend response for a list view might be an array directly,
+        // or an object with a 'results' key if using DRF pagination.
+        // Adjust based on your backend's response structure.
+        // Assuming it's an array of capsules for now.
+        setUserCapsules(capsulesData || []); 
+      } catch (err) {
+        console.error("Failed to fetch capsules:", err);
+        setFetchError(err.message || "Could not load your capsules. Please try again later.");
+        showNotification(err.message || "Could not load capsules.", 'error');
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuthAndLoadCapsules();
-  }, [navigate]);
+  }, [navigate, showNotification]);
 
   const handleLogout = () => {
     authService.logout();
@@ -88,9 +59,24 @@ const DashboardPage = () => {
     );
   }
 
-  const sealedCapsules = userCapsules.filter(c => c.status === 'sealed');
-  const deliveredCapsules = userCapsules.filter(c => c.status === 'delivered');
-  const draftCapsules = userCapsules.filter(c => c.status === 'draft');
+  // Filter capsules based on their actual status from the backend
+  // Assuming backend returns 'is_delivered' and 'is_archived'
+  // We might need to infer 'status' or have the backend provide it directly.
+  // For now, let's map backend fields to the frontend's expected 'status'.
+  const processedCapsules = userCapsules.map(capsule => {
+    let status = 'draft'; // Default status
+    if (capsule.is_delivered) {
+      status = 'delivered';
+    } else if (!capsule.is_archived && capsule.delivery_date) { // Assuming non-archived with a delivery date are 'sealed'
+      status = 'sealed';
+    }
+    // Add other logic if your backend provides a direct status field or more complex conditions
+    return { ...capsule, status };
+  });
+
+  const sealedCapsules = processedCapsules.filter(c => c.status === 'sealed');
+  const deliveredCapsules = processedCapsules.filter(c => c.status === 'delivered');
+  const draftCapsules = processedCapsules.filter(c => c.status === 'draft'); // Or however 'draft' is determined
 
   return (
     <MainLayout>
@@ -100,6 +86,13 @@ const DashboardPage = () => {
           Welcome to your personal Time Capsule dashboard, {user?.email || 'User'}!
         </p>
       </div>
+
+      {fetchError && (
+        <div className="w-full max-w-4xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+          <strong className="font-bold">Error:</strong>
+          <span className="block sm:inline"> {fetchError}</span>
+        </div>
+      )}
 
       <div className="w-full max-w-4xl space-y-8">
         <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" />

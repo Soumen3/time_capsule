@@ -2,12 +2,54 @@
 from django.db import models
 from django.conf import settings # To refer to the custom User model
 from django.utils import timezone
+from django.core.validators import FileExtensionValidator # Import for file validation
+import datetime # Import datetime
 
-# Assuming 'accounts.User' is your custom user model defined in settings.py
-# If CapsuleRecipient also links to a User, ensure that app is installed
-# and you import settings as well.
+# --- Choices for CharFields to ensure data consistency ---
+class CapsuleDeliveryMethod(models.TextChoices):
+    EMAIL = 'email', 'Email'
+    IN_APP = 'in_app', 'In-App Notification'
+    SMS = 'sms', 'SMS' # Potentially add later if needed
 
+class CapsulePrivacyStatus(models.TextChoices):
+    PRIVATE = 'private', 'Private (Only owner can access)'
+    SHARED = 'shared', 'Shared (Specific recipients can access)'
+    # PUBLIC = 'public', 'Public (Viewable by anyone, potentially)' # Consider carefully
+
+
+class CapsuleContentType(models.TextChoices):
+    TEXT = 'text', 'Text'
+    IMAGE = 'image', 'Image'
+    VIDEO = 'video', 'Video'
+    AUDIO = 'audio', 'Audio'
+    DOCUMENT = 'document', 'Document'
+
+
+class CapsuleRecipientStatus(models.TextChoices):
+    PENDING = 'pending', 'Pending Delivery'
+    SENT = 'sent', 'Sent'
+    FAILED = 'failed', 'Failed'
+    OPENED = 'opened', 'Opened' # If you implement tracking
+
+class DeliveryLogStatus(models.TextChoices):
+    SUCCESS = 'success', 'Success'
+    FAILURE = 'failure', 'Failure'
+    PENDING = 'pending', 'Pending (e.g., for async email service)'
+
+class NotificationType(models.TextChoices):
+    DELIVERY_SUCCESS = 'delivery_success', 'Capsule Delivered'
+    DELIVERY_FAIL = 'delivery_fail', 'Capsule Delivery Failed'
+    NEW_SHARED_CAPSULE = 'new_shared_capsule', 'New Shared Capsule'
+    REMINDER = 'reminder', 'Reminder'
+    SYSTEM_ALERT = 'system_alert', 'System Alert'
+    TRANSFER_NOTIFICATION = 'transfer_notification', 'Capsule Transferred'
+
+
+# --- Core Capsule Model ---
 class Capsule(models.Model):
+    """
+    Represents the main time capsule, holding its metadata and delivery schedule.
+    """
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -23,8 +65,13 @@ class Capsule(models.Model):
         auto_now_add=True,
         help_text="The exact date and time the capsule was created."
     )
-    delivery_date = models.DateTimeField(
+    # delivery_date stores both date and time
+    delivery_date = models.DateField(
         help_text="The scheduled date and time for the capsule to be delivered."
+    )
+    delivery_time = models.TimeField(
+        default=datetime.time(hour=0, minute=0),  # 12:00 AM midnight
+        help_text="The scheduled time for the capsule to be delivered on the delivery_date."
     )
     is_delivered = models.BooleanField(
         default=False,
@@ -36,23 +83,14 @@ class Capsule(models.Model):
     )
     delivery_method = models.CharField(
         max_length=50,
-        choices=[
-            ('email', 'Email'),
-            ('in_app', 'In-App Notification'),
-            # ('sms', 'SMS'), # Potentially add later if needed
-        ],
-        default='email',
+        choices=CapsuleDeliveryMethod.choices,
+        default=CapsuleDeliveryMethod.EMAIL,
         help_text="The primary method for delivering the capsule content."
     )
-    # Privacy settings
     privacy_status = models.CharField(
         max_length=50,
-        choices=[
-            ('private', 'Private (Only owner can access)'),
-            ('shared', 'Shared (Specific recipients can access)'), # For group capsules
-            # ('public', 'Public (Viewable by anyone, potentially)') # Consider carefully
-        ],
-        default='private',
+        choices=CapsulePrivacyStatus.choices,
+        default=CapsulePrivacyStatus.PRIVATE,
         help_text="Determines who can access the capsule's contents."
     )
     # Fields for 'legacy management' / account inactivity
@@ -71,44 +109,49 @@ class Capsule(models.Model):
         ordering = ['delivery_date'] # Default ordering for querying
 
     def __str__(self):
-        return f"Capsule '{self.title}' by {self.owner.username}"
+        return f"Capsule '{self.title}' by {self.owner.email}"
 
-    # Custom methods can be added here, e.g., to check if capsule is due
+    # Custom methods to check if capsule is due
     def is_due_for_delivery(self):
         return not self.is_delivered and self.delivery_date <= timezone.now()
 
 
+# --- Capsule Content Model (Handles Text, Images, Videos, Documents, Audio) ---
 class CapsuleContent(models.Model):
+    """
+    Stores individual content items for a time capsule.
+    Uses a single table for all content types, with fields being null where not applicable.
+    """
     capsule = models.ForeignKey(
-        Capsule,
+        'Capsule', # Use string reference if Capsule is defined later or in another app
         on_delete=models.CASCADE,
         related_name='contents',
         help_text="The capsule this content belongs to."
     )
     content_type = models.CharField(
         max_length=50,
-        choices=[
-            ('text', 'Text'),
-            ('image', 'Image'),
-            ('video', 'Video'),
-            ('audio', 'Audio'),
-            ('document', 'Document'), # e.g., PDF, Word doc
-        ],
-        help_text="The type of content stored."
+        choices=CapsuleContentType.choices,
+        help_text="The type of content stored (text, image, video, audio, document)."
     )
     text_content = models.TextField(
         blank=True, null=True,
-        help_text="Text content for 'text' type capsules."
+        help_text="Text content for 'text' type capsules. Null for file-based content."
     )
     file = models.FileField(
-        upload_to='capsule_files/', # Will be handled by S3 via django-storages
+        upload_to='capsule_files/', # Files will be stored in your MEDIA_ROOT/capsule_files/
         blank=True, null=True,
-        help_text="File content for 'image', 'video', 'audio', 'document' types."
-    )
-    thumbnail = models.ImageField(
-        upload_to='capsule_thumbnails/',
-        blank=True, null=True,
-        help_text="Thumbnail for media files (e.g., video previews)."
+        # Validators for common media and document file extensions
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=[
+                    'jpg', 'jpeg', 'png', 'gif', 'webp', # Images
+                    'mp4', 'avi', 'mov', 'webm', # Videos
+                    'mp3', 'wav', 'ogg', # Audio
+                    'pdf', 'doc', 'docx', 'txt', 'rtf' # Documents
+                ]
+            )
+        ],
+        help_text="File content for 'image', 'video', 'audio', 'document' types. Null for text content."
     )
     upload_date = models.DateTimeField(
         auto_now_add=True,
@@ -123,12 +166,25 @@ class CapsuleContent(models.Model):
         verbose_name = "Capsule Content"
         verbose_name_plural = "Capsule Contents"
         ordering = ['order']
+        # Add a constraint to ensure either text_content or file is present
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(text_content__isnull=False) | models.Q(file__isnull=False),
+                name='text_or_file_content_required'
+            )
+        ]
 
     def __str__(self):
         return f"Content for Capsule '{self.capsule.title}' ({self.content_type})"
 
 
+
+# --- Capsule Recipient Model ---
 class CapsuleRecipient(models.Model):
+    """
+    Defines who will receive a time capsule.
+    A capsule can have multiple recipients.
+    """
     capsule = models.ForeignKey(
         Capsule,
         on_delete=models.CASCADE,
@@ -138,22 +194,17 @@ class CapsuleRecipient(models.Model):
     recipient_email = models.EmailField(
         help_text="The email address of the person who will receive the capsule."
     )
-    # recipient_user = models.ForeignKey(
-    #     settings.AUTH_USER_MODEL,
-    #     on_delete=models.SET_NULL,
-    #     related_name='received_capsules',
-    #     blank=True, null=True,
-    #     help_text="Optional: If the recipient is also a registered user."
-    # )
+    recipient_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='received_capsules',
+        blank=True, null=True,
+        help_text="Optional: If the recipient is also a registered user."
+    )
     received_status = models.CharField(
         max_length=20,
-        choices=[
-            ('pending', 'Pending Delivery'),
-            ('sent', 'Sent'),
-            ('failed', 'Failed'),
-            ('opened', 'Opened'), # If you implement tracking
-        ],
-        default='pending',
+        choices=CapsuleRecipientStatus.choices,
+        default=CapsuleRecipientStatus.PENDING,
         help_text="Status of the capsule delivery to this specific recipient."
     )
     sent_date = models.DateTimeField(
@@ -164,13 +215,17 @@ class CapsuleRecipient(models.Model):
     class Meta:
         verbose_name = "Capsule Recipient"
         verbose_name_plural = "Capsule Recipients"
-        unique_together = ('capsule', 'recipient_email')
+        unique_together = ('capsule', 'recipient_email') # A recipient email can only be added once per capsule
 
     def __str__(self):
         return f"Recipient {self.recipient_email} for Capsule '{self.capsule.title}'"
 
 
+# --- Delivery Log Model ---
 class DeliveryLog(models.Model):
+    """
+    Logs the delivery attempts and status of time capsules.
+    """
     capsule = models.ForeignKey(
         Capsule,
         on_delete=models.CASCADE,
@@ -183,11 +238,7 @@ class DeliveryLog(models.Model):
     )
     delivery_method = models.CharField(
         max_length=50,
-        choices=[
-            ('email', 'Email'),
-            ('in_app', 'In-App Notification'),
-            ('sms', 'SMS'),
-        ],
+        choices=CapsuleDeliveryMethod.choices, # Reusing choices from Capsule model
         help_text="The method used for this specific delivery attempt."
     )
     recipient_email = models.EmailField(
@@ -202,12 +253,8 @@ class DeliveryLog(models.Model):
     )
     status = models.CharField(
         max_length=50,
-        choices=[
-            ('success', 'Success'),
-            ('failure', 'Failure'),
-            ('pending', 'Pending (e.g., for async email service)'),
-        ],
-        default='pending',
+        choices=DeliveryLogStatus.choices,
+        default=DeliveryLogStatus.PENDING,
         help_text="The outcome of the delivery attempt."
     )
     error_message = models.TextField(
@@ -225,13 +272,18 @@ class DeliveryLog(models.Model):
         ordering = ['-delivery_attempt_time']
 
     def __str__(self):
+        recipient_info = self.recipient_email or (self.recipient_user.email if self.recipient_user else 'Unknown')
         return (
             f"Delivery Log for Capsule '{self.capsule.title}' "
-            f"to {self.recipient_email or self.recipient_user} - {self.status}"
+            f"to {recipient_info} - {self.status}"
         )
 
 
+# --- Notification Model ---
 class Notification(models.Model):
+    """
+    Stores in-app notifications for users.
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -250,14 +302,7 @@ class Notification(models.Model):
     )
     notification_type = models.CharField(
         max_length=50,
-        choices=[
-            ('delivery_success', 'Capsule Delivered'),
-            ('delivery_fail', 'Capsule Delivery Failed'),
-            ('new_shared_capsule', 'New Shared Capsule'),
-            ('reminder', 'Reminder'),
-            ('system_alert', 'System Alert'),
-            ('transfer_notification', 'Capsule Transferred'),
-        ],
+        choices=NotificationType.choices,
         help_text="Categorizes the type of notification."
     )
     is_read = models.BooleanField(
@@ -279,4 +324,5 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Notification for {self.user.username}: {self.notification_type}"
+        return f"Notification for {self.user.email}: {self.notification_type}"
+
