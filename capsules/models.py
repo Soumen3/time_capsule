@@ -109,7 +109,7 @@ class Capsule(models.Model):
         ordering = ['delivery_date'] # Default ordering for querying
 
     def __str__(self):
-        return f"Capsule '{self.title}' by {self.owner.email}"
+        return f"Capsule '{self.title}' by {self.owner.email} (ID: {self.id})"
 
     # Custom methods to check if capsule is due
     def is_due_for_delivery(self):
@@ -261,9 +261,9 @@ class DeliveryLog(models.Model):
         blank=True, null=True,
         help_text="Detailed error message if the delivery failed."
     )
-    external_id = models.CharField(
-        max_length=255, blank=True, null=True,
-        help_text="External ID from the delivery service (e.g., SendGrid message ID)."
+    details = models.TextField(
+        blank=True, null=True,
+        help_text="Additional details about the delivery attempt, such as success messages or logs."
     )
 
     class Meta:
