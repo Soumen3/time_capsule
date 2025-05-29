@@ -1,6 +1,11 @@
 from rest_framework import serializers
-from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleContentType
+from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleContentType, CapsuleRecipientStatus
 from django.utils import timezone
+from .tasks import deliver_capsule_email_task
+import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CapsuleRecipientSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,6 +67,28 @@ class CapsuleSerializer(serializers.ModelSerializer):
         text_content_data = validated_data.pop('text_content', None)
         recipient_email_data = validated_data.pop('recipient_email')
 
+        delivery_date = validated_data.get('delivery_date')
+        delivery_time = validated_data.get('delivery_time')
+        
+        eta_datetime_utc = None
+        if delivery_date and delivery_time:
+            try:
+                # Create a naive datetime object from date and time
+                naive_datetime = datetime.datetime.combine(delivery_date, delivery_time)
+                logger.debug(f"Naive datetime created: {naive_datetime}")
+
+                # Make it timezone-aware using Django's default timezone
+                aware_datetime_local = timezone.make_aware(naive_datetime, timezone.get_default_timezone())
+                logger.debug(f"Aware datetime (local TZ): {aware_datetime_local}")
+
+                # Convert this local aware datetime to UTC for Celery ETA
+                eta_datetime_utc = aware_datetime_local.astimezone(datetime.timezone.utc)
+                logger.info(f"Calculated ETA (UTC) for capsule: {eta_datetime_utc}")
+
+            except Exception as e:
+                logger.error(f"Error creating delivery datetime: {e}")
+                # Decide how to handle this - perhaps don't schedule or raise error
+
         # Create the capsule instance
         capsule = Capsule.objects.create(owner=owner, **validated_data)
 
@@ -75,7 +102,6 @@ class CapsuleSerializer(serializers.ModelSerializer):
             )
 
         # Create CapsuleContent for each uploaded media file
-        # Start order after text content if it exists
         file_order_start = 1 if text_content_data else 0
         for index, file_data in enumerate(media_files_data):
             content_type = self.get_file_content_type(file_data)
@@ -86,12 +112,28 @@ class CapsuleSerializer(serializers.ModelSerializer):
                 order=file_order_start + index
             )
         
-        # Create CapsuleRecipient
-        # For multiple recipients, recipient_email_data would be a list
-        CapsuleRecipient.objects.create(
+        recipient_obj = CapsuleRecipient.objects.create(
             capsule=capsule,
-            recipient_email=recipient_email_data,
-            # received_status will default to PENDING
+            recipient_email=recipient_email_data
         )
+
+        # Schedule the Celery task for email delivery
+        current_time_utc = timezone.now().astimezone(datetime.timezone.utc)
+        
+        if eta_datetime_utc:
+            if eta_datetime_utc > current_time_utc:
+                deliver_capsule_email_task.apply_async(
+                    args=[capsule.id, recipient_obj.id],
+                    eta=eta_datetime_utc
+                )
+                logger.info(f"Capsule ID {capsule.id} delivery scheduled for {eta_datetime_utc} (UTC) to {recipient_obj.recipient_email}")
+            else: # ETA is in the past or now
+                deliver_capsule_email_task.apply_async(
+                    args=[capsule.id, recipient_obj.id],
+                    countdown=10 # Execute in 10 seconds for past/current ETAs
+                )
+                logger.info(f"Capsule ID {capsule.id} delivery ETA {eta_datetime_utc} (UTC) is past/now. Scheduled for near-immediate delivery to {recipient_obj.recipient_email}")
+        else:
+            logger.warning(f"Capsule ID {capsule.id} has no valid delivery date/time for scheduling email.")
 
         return capsule

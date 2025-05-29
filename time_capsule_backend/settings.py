@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +44,8 @@ INSTALLED_APPS = [
     'corsheaders', 
     'accounts',
     'capsules',
+    'django_celery_beat',  # For periodic tasks
+    'django_celery_results',  # For storing Celery task results
 ]
 
 MIDDLEWARE = [
@@ -151,3 +155,75 @@ CORS_ALLOWED_ORIGINS = [
 
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
+
+# Email Configuration
+# Ensure EMAIL_USER environment variable is set to your Gmail address (e.g., your.email@gmail.com)
+# Ensure EMAIL_PASS environment variable is set to your Gmail App Password if 2FA is ON, or regular password if 2FA is OFF and Less Secure Apps is ON.
+EMAIL_HOST_USER = config('EMAIL_USER') 
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
+
+# DEFAULT_FROM_EMAIL should ideally be the same as EMAIL_HOST_USER or an alias it can send as.
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER # Or your specific from address if different but authorized
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Frontend URL (used for constructing links in emails)
+FRONTEND_BASE_URL = 'http://localhost:5173' # Or your frontend's actual URL
+
+# Celery Configuration Options
+# Make sure your Redis server is running
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as the broker
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0' # Using Redis for results backend
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE # Use Django's timezone
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler' # If you use Celery Beat for periodic tasks
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_EXTENDED= True  # Store extended results in the database
+
+
+# LOGGING CONFIGURATION
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose', # Use verbose for more details
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO', # Set to DEBUG for more verbose output during development
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO', # Or 'DEBUG'
+            'propagate': False,
+        },
+        'capsules': { # Your app's logger
+            'handlers': ['console'],
+            'level': 'DEBUG', # Set to DEBUG to see your custom log messages
+            'propagate': False,
+        },
+        'celery': { # Celery's own logger
+            'handlers': ['console'],
+            'level': 'INFO', # Or 'DEBUG'
+            'propagate': False,
+        }
+    }
+}
