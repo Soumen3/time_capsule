@@ -106,7 +106,7 @@ const DashboardPage = () => {
         <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" />
         <CapsuleList capsules={deliveredCapsules} title="Delivered (Not Yet Opened)" />
         <CapsuleList capsules={openedCapsules} title="Opened Capsules" />
-        <CapsuleList capsules={draftCapsules} title="Draft Capsules" />
+        {/* <CapsuleList capsules={draftCapsules} title="Draft Capsules" /> */}
       </div>
 
     </MainLayout>
