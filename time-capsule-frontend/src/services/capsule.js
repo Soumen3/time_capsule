@@ -82,10 +82,23 @@ const getCapsuleById = async (capsuleId) => {
   }
 };
 
+const getPublicCapsuleByToken = async (token) => {
+  try {
+    // This request does not need an Authorization header
+    const response = await api.get(`/capsules/public/capsules/${token}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public capsule by token:', error.response || error);
+    // Rethrow or handle as appropriate for your UI
+    throw error.response?.data || new Error('Failed to load capsule. The link may be invalid or expired.');
+  }
+};
+
 const capsuleService = {
   createCapsule,
   getCapsules,
   getCapsuleById, // Add the new function
+  getPublicCapsuleByToken, // New method for fetching public capsule data
 };
 
 export default capsuleService;

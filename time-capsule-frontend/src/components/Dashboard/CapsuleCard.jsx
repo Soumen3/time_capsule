@@ -11,6 +11,7 @@ const CapsuleCard = ({ capsule }) => {
     switch (status) {
       case 'sealed': return '🔒';
       case 'delivered': return '📬';
+      case 'opened': return '📭'; // Unicode for "Open" or use an emoji like '👀' or '✅'
       case 'draft': return '📝';
       default: return '📦';
     }
@@ -20,6 +21,7 @@ const CapsuleCard = ({ capsule }) => {
     switch (status) {
       case 'sealed': return 'text-blue-600 bg-blue-100';
       case 'delivered': return 'text-green-600 bg-green-100';
+      case 'opened': return 'text-purple-600 bg-purple-100'; // New color for opened
       case 'draft': return 'text-yellow-600 bg-yellow-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -66,7 +68,7 @@ const CapsuleCard = ({ capsule }) => {
         {capsule.status === 'draft' && (
           <Button variant="secondary" className="px-4 py-2 text-sm">Edit</Button>
         )}
-        {capsule.status === 'delivered' && (
+        {(capsule.status === 'delivered' || capsule.status === 'opened') && (
           <Button variant="primary" className="px-4 py-2 text-sm" onClick={handleViewDetails}>View Content</Button>
         )}
         {capsule.status === 'sealed' && (

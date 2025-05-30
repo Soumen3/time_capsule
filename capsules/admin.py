@@ -35,10 +35,22 @@ class CapsuleContentAdmin(admin.ModelAdmin):
 
 @admin.register(CapsuleRecipient)
 class CapsuleRecipientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'capsule', 'recipient_email', 'received_status', 'sent_date')
-    list_filter = ('received_status',)
-    search_fields = ('capsule__title', 'recipient_email')
-    ordering = ('capsule',)
+    list_display = (
+        'id', 
+        'capsule_title', 
+        'recipient_email', 
+        'received_status', 
+        'sent_date', 
+        'access_token', # Add access_token here
+        'token_generated_at' # Add token_generated_at here
+    )
+    list_filter = ('received_status', 'capsule__delivery_date')
+    search_fields = ('recipient_email', 'capsule__title')
+    readonly_fields = ('access_token', 'token_generated_at', 'sent_date') # Make token fields read-only
+
+    def capsule_title(self, obj):
+        return obj.capsule.title
+    capsule_title.short_description = 'Capsule Title' # Column header
 
 @admin.register(DeliveryLog)
 class DeliveryLogAdmin(admin.ModelAdmin):

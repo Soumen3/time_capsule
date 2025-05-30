@@ -5,6 +5,7 @@ from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleRecipientS
 from .utils import send_capsule_link_email
 import datetime
 import logging
+import uuid # Import uuid
 
 logger = logging.getLogger(__name__)
 logger.disabled = settings.DISABLE_LOGGING  # Use the global setting to control logging
@@ -38,6 +39,14 @@ def deliver_capsule_email_task(self, capsule_id, recipient_id):
         elif hasattr(owner, 'email') and owner.email: # Fallback to email if name is not set
              owner_name = owner.email
 
+        # Ensure recipient has an access token
+        if not recipient.access_token:
+            recipient.access_token = uuid.uuid4()
+            recipient.token_generated_at = timezone.now()
+            recipient.save(update_fields=['access_token', 'token_generated_at'])
+            logger.info(f"Generated access token for recipient ID {recipient.id}")
+
+
         # Fetch first text content if available
         
         first_text_content_obj = CapsuleContent.objects.filter(
@@ -52,14 +61,16 @@ def deliver_capsule_email_task(self, capsule_id, recipient_id):
         email_sent_successfully, email_status_message = send_capsule_link_email(
             recipient_email=recipient.recipient_email,
             capsule_title=capsule.title,
-            capsule_id=capsule.id,
+            capsule_id=capsule.id, # Still useful for internal reference
             owner_name=owner_name,
-            text_content=text_content_for_email # Pass the text content
+            text_content=text_content_for_email,
+            access_token=recipient.access_token # Pass the access token
         )
 
         if email_sent_successfully: # Check the boolean success flag
             capsule.is_delivered = True # Mark main capsule as delivered
-            capsule.save(update_fields=['is_delivered'])
+            capsule.is_unlocked = True  # Mark capsule as unlocked since the link is sent
+            capsule.save(update_fields=['is_delivered', 'is_unlocked'])
 
             recipient.received_status = CapsuleRecipientStatus.SENT
             recipient.sent_date = timezone.now()
