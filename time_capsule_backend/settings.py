@@ -186,6 +186,7 @@ CELERY_RESULT_EXTENDED= True  # Store extended results in the database
 
 
 # LOGGING CONFIGURATION
+DISABLE_LOGGING = False
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

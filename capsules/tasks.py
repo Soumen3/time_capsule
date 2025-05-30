@@ -1,12 +1,13 @@
 from celery import shared_task
 from django.utils import timezone
 from django.conf import settings
-from .models import Capsule, CapsuleRecipient, CapsuleRecipientStatus, DeliveryLog, CapsuleDeliveryMethod, DeliveryLogStatus
+from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleRecipientStatus, DeliveryLog, CapsuleDeliveryMethod, DeliveryLogStatus, CapsuleContentType # Import CapsuleContentType
 from .utils import send_capsule_link_email
 import datetime
 import logging
 
 logger = logging.getLogger(__name__)
+logger.disabled = settings.DISABLE_LOGGING  # Use the global setting to control logging
 
 @shared_task(
     bind=True, 
@@ -37,12 +38,23 @@ def deliver_capsule_email_task(self, capsule_id, recipient_id):
         elif hasattr(owner, 'email') and owner.email: # Fallback to email if name is not set
              owner_name = owner.email
 
+        # Fetch first text content if available
+        
+        first_text_content_obj = CapsuleContent.objects.filter(
+            capsule=capsule, 
+            content_type=CapsuleContentType.TEXT
+        ).first()  # Get the first text content object
+        # If no text content, set to None
+        text_content_for_email = first_text_content_obj.text_content if first_text_content_obj else None
+        logger.info(f"Text content for email: {text_content_for_email}")
+
         # send_capsule_link_email now returns a tuple: (bool_success, message_string)
         email_sent_successfully, email_status_message = send_capsule_link_email(
             recipient_email=recipient.recipient_email,
             capsule_title=capsule.title,
             capsule_id=capsule.id,
-            owner_name=owner_name
+            owner_name=owner_name,
+            text_content=text_content_for_email # Pass the text content
         )
 
         if email_sent_successfully: # Check the boolean success flag
