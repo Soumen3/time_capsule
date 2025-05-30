@@ -1,13 +1,19 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .serializers import CapsuleSerializer 
-from .models import Capsule, CapsuleContent # Ensure CapsuleContent is imported if not already
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import status, viewsets, generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .serializers import CapsuleSerializer, PublicCapsuleSerializer 
+from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleRecipientStatus # Ensure CapsuleRecipientStatus is imported
+from django.utils import timezone
+from django.http import Http404
 from .renderer import CapsuleRenderer
 from rest_framework.parsers import MultiPartParser, FormParser # For file uploads
-
+import uuid
+import datetime # Import datetime
+from django.conf import settings # Import settings for DEBUG check
+import logging
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 class CreateCapsuleView(APIView):
@@ -62,5 +68,73 @@ class CapsuleDetailView(APIView): # Example: A view to get details of a single c
         serializer = CapsuleSerializer(capsule, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class CapsuleViewSet(viewsets.ModelViewSet):
+    # Assuming you will define this viewset for other capsule-related actions
+    queryset = Capsule.objects.all()
+    serializer_class = CapsuleSerializer
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer]
+
+class PublicCapsuleRetrieveView(generics.RetrieveAPIView):
+    """
+    Allows unauthenticated access to view a specific capsule's details using a unique access token.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = PublicCapsuleSerializer
+    queryset = Capsule.objects.all() # Base queryset, will be filtered in get_object
+
+    def get_object(self):
+        access_token_str = str(self.kwargs.get('access_token'))
+        try:
+            # Validate UUID format before querying
+            access_token = uuid.UUID(access_token_str, version=4)
+            logger.debug(f"Access token UUID validated: {access_token}")
+        except ValueError:
+            raise Http404("Invalid token format.")
+
+        try:
+            # Fetch the recipient by the access token
+            # Ensure the capsule is selected to avoid extra DB hit
+            recipient = CapsuleRecipient.objects.select_related('capsule', 'capsule__owner').get(access_token=access_token)
+        except CapsuleRecipient.DoesNotExist:
+            raise Http404("Capsule not found or access token is invalid.") # Corrected error message
+
+        capsule = recipient.capsule
+
+        # Check if the capsule is actually "unlocked" for viewing based on delivery date and time
+        current_datetime = timezone.now()
+        # Combine date and time from the capsule model, then make it timezone-aware
+        delivery_datetime_naive = datetime.datetime.combine(capsule.delivery_date, capsule.delivery_time)
+        delivery_datetime_aware = timezone.make_aware(delivery_datetime_naive, timezone.get_default_timezone())
+
+        if delivery_datetime_aware > current_datetime and not settings.DEBUG:
+            logger.warning(f"Attempt to access capsule ID {capsule.id} via token {access_token} before delivery time.")
+            raise Http404("This time capsule is not yet available.")
+
+        # Additionally, check if the capsule itself is marked as unlocked
+        if not capsule.is_unlocked and not settings.DEBUG: # Allow viewing in DEBUG even if not explicitly unlocked
+            logger.warning(f"Attempt to access capsule ID {capsule.id} (not unlocked) via token {access_token}.")
+            raise Http404("This time capsule is not currently accessible.")
+
+
+        # Log access and update recipient status to 'OPENED' if it was 'SENT'
+        # This should ideally only happen once per recipient.
+        if recipient.received_status == CapsuleRecipientStatus.SENT:
+            recipient.received_status = CapsuleRecipientStatus.OPENED
+            # You might want to record the opened_at time as well if you add such a field
+            # recipient.opened_at = timezone.now() 
+            recipient.save(update_fields=['received_status'])
+            logger.info(f"Capsule ID {capsule.id} opened by recipient {recipient.recipient_email} via token {access_token}.")
+        elif recipient.received_status == CapsuleRecipientStatus.PENDING and delivery_datetime_aware <= current_datetime:
+            # If for some reason the status was PENDING but it's now due and accessed, mark as OPENED.
+            # This might indicate an issue in the delivery task not updating status to SENT.
+            recipient.received_status = CapsuleRecipientStatus.OPENED
+            recipient.save(update_fields=['received_status'])
+            logger.info(f"Capsule ID {capsule.id} (status PENDING) opened by recipient {recipient.recipient_email} via token {access_token}.")
+
+
+        return capsule
+
 # In your urls.py, you would have a path like:
 # path('capsules/<int:pk>/', CapsuleDetailView.as_view(), name='capsule-detail'),
+# path('public-capsule/<uuid:access_token>/', PublicCapsuleRetrieveView.as_view(), name='public-capsule-detail'),

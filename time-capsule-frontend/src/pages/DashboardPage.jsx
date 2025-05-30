@@ -65,8 +65,13 @@ const DashboardPage = () => {
   // For now, let's map backend fields to the frontend's expected 'status'.
   const processedCapsules = userCapsules.map(capsule => {
     let status = 'draft'; // Default status
+    console.log(capsule)
     if (capsule.is_delivered) {
-      status = 'delivered';
+      // Check if any recipient has opened the capsule
+      const hasBeenOpened = capsule.recipients && capsule.recipients.some(
+        recipient => recipient.received_status === 'opened'
+      );
+      status = hasBeenOpened ? 'opened' : 'delivered'; // Set to 'opened' if any recipient opened it
     } else if (!capsule.is_archived && capsule.delivery_date) { // Assuming non-archived with a delivery date are 'sealed'
       status = 'sealed';
     }
@@ -75,7 +80,10 @@ const DashboardPage = () => {
   });
 
   const sealedCapsules = processedCapsules.filter(c => c.status === 'sealed');
+  // Delivered capsules are those marked 'delivered' but not 'opened'
   const deliveredCapsules = processedCapsules.filter(c => c.status === 'delivered');
+  // Opened capsules are those specifically marked 'opened'
+  const openedCapsules = processedCapsules.filter(c => c.status === 'opened');
   const draftCapsules = processedCapsules.filter(c => c.status === 'draft'); // Or however 'draft' is determined
 
   return (
@@ -96,7 +104,8 @@ const DashboardPage = () => {
 
       <div className="w-full max-w-4xl space-y-8">
         <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" />
-        <CapsuleList capsules={deliveredCapsules} title="Delivered Capsules" />
+        <CapsuleList capsules={deliveredCapsules} title="Delivered (Not Yet Opened)" />
+        <CapsuleList capsules={openedCapsules} title="Opened Capsules" />
         <CapsuleList capsules={draftCapsules} title="Draft Capsules" />
       </div>
 

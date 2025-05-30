@@ -1,0 +1,172 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import capsuleService from '../services/capsule';
+import MainLayout from '../components/Layout/MainLayout'; // Or a simpler public layout
+
+const PublicCapsuleViewPage = () => {
+  const { accessToken } = useParams();
+  const [capsule, setCapsule] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchCapsule = async () => {
+      if (!accessToken) {
+        setError('No access token provided.');
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        setError('');
+        const data = await capsuleService.getPublicCapsuleByToken(accessToken);
+        setCapsule(data);
+      } catch (err) {
+        setError(err.message || 'Could not load the time capsule. The link might be invalid or expired.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCapsule();
+  }, [accessToken]);
+
+  const renderContentItem = (item) => {
+    const mediaUrl = item.file ? `${import.meta.env.VITE_API_BASE_URL}${item.file.substring(1)}` : null;
+    // ^ Adjust VITE_API_BASE_URL if it includes /api/ already, or construct full URL properly.
+    // Assuming item.file is like "/media/capsule_files/image.jpg"
+    // and VITE_API_BASE_URL is "http://localhost:8000"
+    // then mediaUrl should be "http://localhost:8000/media/capsule_files/image.jpg"
+    // If VITE_API_BASE_URL is "http://localhost:8000/api/", then need to adjust.
+    // For simplicity, let's assume VITE_API_BASE_URL is just the domain.
+    // A better way is to ensure your backend serves media correctly and item.file is a full URL or relative to MEDIA_URL.
+    // For now, let's assume item.file is a relative path from MEDIA_ROOT.
+    // The backend serializer should ideally return full URLs for files.
+
+    // Let's assume the backend serializer for PublicCapsuleContentSerializer returns full URLs for `file`
+    // If not, you'll need to construct it:
+    // const fullMediaUrl = item.file ? `${import.meta.env.VITE_API_DOMAIN || 'http://localhost:8000'}${item.file}` : null;
+
+
+    switch (item.content_type) {
+      case 'text':
+        return (
+          <div className="p-4 mb-4 bg-gray-50 border border-gray-200 rounded-md shadow-sm">
+            <h4 className="font-semibold text-gray-700 mb-2">Message:</h4>
+            <p className="text-gray-600 whitespace-pre-wrap">{item.text_content}</p>
+          </div>
+        );
+      case 'image':
+        return (
+          <div className="mb-4 text-center">
+            <img src={item.file} alt="Capsule content" className="max-w-full h-auto rounded-lg shadow-md inline-block" style={{ maxHeight: '500px' }} />
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="mb-4">
+            <video controls src={item.file} className="w-full rounded-lg shadow-md" style={{ maxHeight: '500px' }}>
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        );
+      case 'audio':
+        return (
+          <div className="mb-4">
+            <audio controls src={item.file} className="w-full">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        );
+      case 'document':
+        return (
+          <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md shadow-sm">
+            <a href={item.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium underline">
+              View Document: {item.file ? item.file.split('/').pop() : 'Unnamed Document'}
+            </a>
+            <p className="text-sm text-gray-500 mt-1">Click to open the document in a new tab.</p>
+          </div>
+        );
+      default:
+        return <p className="text-gray-500">Unsupported content type.</p>;
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="text-center py-10">
+          <p className="text-xl text-gray-700">Loading your Time Capsule...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="text-center py-10 px-4">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Oops!</h2>
+          <p className="text-lg text-gray-700 mb-6">{error}</p>
+          <Link to="/" className="text-blue-600 hover:underline">Go to Homepage</Link>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!capsule) {
+    return (
+      <MainLayout>
+        <div className="text-center py-10">
+          <p className="text-xl text-gray-700">Capsule not found.</p>
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  const deliveryDate = new Date(capsule.delivery_date).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  return (
+    <MainLayout>
+      <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="bg-white shadow-xl rounded-lg p-6 sm:p-8">
+          <header className="mb-8 text-center border-b pb-6 border-gray-200">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">{capsule.title}</h1>
+            <p className="text-lg text-gray-600">A message from {capsule.owner_name || 'a friend'}, unsealed on {deliveryDate}.</p>
+          </header>
+
+          {capsule.description && (
+            <section className="mb-8 p-4 bg-indigo-50 rounded-md border border-indigo-100">
+              <h2 className="text-xl font-semibold text-indigo-700 mb-2">About this Capsule:</h2>
+              <p className="text-gray-700 whitespace-pre-wrap">{capsule.description}</p>
+            </section>
+          )}
+
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Capsule Contents</h2>
+            {capsule.contents && capsule.contents.length > 0 ? (
+              capsule.contents.sort((a, b) => a.order - b.order).map(item => (
+                <div key={item.id} className="mb-6">
+                  {renderContentItem(item)}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center">This capsule appears to be empty.</p>
+            )}
+          </section>
+          
+          <footer className="mt-10 text-center pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} Time Capsule Project. All rights reserved.</p>
+             <Link to="/" className="text-blue-600 hover:underline mt-2 inline-block">Create your own Time Capsule</Link>
+          </footer>
+        </div>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default PublicCapsuleViewPage;

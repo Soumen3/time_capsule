@@ -4,6 +4,7 @@ from django.conf import settings # To refer to the custom User model
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator # Import for file validation
 import datetime # Import datetime
+import uuid # Import UUID for access tokens
 
 # --- Choices for CharFields to ensure data consistency ---
 class CapsuleDeliveryMethod(models.TextChoices):
@@ -80,6 +81,10 @@ class Capsule(models.Model):
     is_archived = models.BooleanField(
         default=False,
         help_text="Indicates if the capsule is archived by the owner (e.g., after delivery)."
+    )
+    is_unlocked = models.BooleanField(
+        default=False,
+        help_text="Indicates if the capsule has been unlocked by the owner or recipient."
     )
     delivery_method = models.CharField(
         max_length=50,
@@ -211,6 +216,20 @@ class CapsuleRecipient(models.Model):
         blank=True, null=True,
         help_text="The date and time the capsule was sent to this recipient."
     )
+    access_token = models.UUIDField(
+        default=uuid.uuid4, # Generates a default UUID
+        editable=False, 
+        unique=True, 
+        null=True, # Allow null initially for existing records, can be False after migration
+        blank=True, # Allow blank initially
+        help_text="Unique token for unauthenticated access to this recipient's view of the capsule."
+    )
+    token_generated_at = models.DateTimeField(
+        auto_now_add=True, # Automatically set when the token is generated
+        null=True, blank=True,
+        help_text="Timestamp when the access token was generated or last refreshed."
+    )
+
 
     class Meta:
         verbose_name = "Capsule Recipient"

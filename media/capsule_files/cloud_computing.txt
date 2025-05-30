@@ -1,0 +1,447 @@
+What is virtualization?
+
+
+State the types of hardware virtualization?
+
+
+What is Grid Computing?
+
+
+What is hardware virtualization?
+
+
+Define virtual machine monitor.
+
+
+What do you mean by distributed computing?
+
+
+What are the major roles within SOA?
+
+
+Define memory virtualization.
+
+
+State any two differences between cloud computing  and grid computing.
+
+
+Differentiate between full virtualization and para  virtualization.
+
+
+Illustrate the CPU virtualization.
+
+
+State any two responsibilities of virtual machine  monitor.
+
+
+What do you mean by I/O virtualization?
+
+
+What is host based virtualization?
+
+
+What do you mean by hardware abstraction level of  virtualization?
+
+
+State any two merits of virtualization at different levels.
+
+
+What is cloud computing?
+
+
+What is autonomic computing?
+
+
+What are the innovative characteristics of cloud  computing?
+
+
+Which are the technologies on which cloud computing  relies?
+
+
+Express the levels of virtualization.
+
+
+What are the service models available in cloud  computing?
+
+
+State two challenges in cloud technologies.
+
+
+Point out the basic operations of VM.
+
+
+Show the difference between thin and thick client.
+
+
+Illustrate the virtual appliances in cloud computing.
+
+
+State any two characteristic of cloud computing.
+
+
+State any two advantage of cloud computing.
+
+
+State any two differences between autonomous and  utility computing.
+
+
+What is SPI?
+
+
+State any two service provider of SaaS.
+
+
+What is PaaS?
+
+
+Define community cloud.
+
+
+State any two characteristics of SaaS.
+
+
+State two differences between private cloud and public  cloud.
+
+
+Why does one choose public cloud over private cloud?
+
+
+Point out the role of cloud auditor in cloud.
+
+
+What do you mean by Amazon Simple Storage  Service?
+
+
+Differentiate name node and data node in hadoop file  system.
+
+
+What do you mean by the open stack components?
+
+
+State the core components of App Engine.
+
+
+Briefly demonstrate the AWS architecture.
+
+
+State the basic features of Amazon EC2.
+
+
+State what is a bucket? What type of storage does it  provide.
+
+
+State the computing services offered by the App  Engine.
+
+
+List the different perspectives of cloud providers,  Vendors and Users.
+
+
+What is a data store? What type of data can be stored  in it.
+
+
+State the limitations of virtualization.
+
+
+State any two benefits of using infrastructure as a  service.
+
+
+State any two drawbacks of using infrastructure as a  service.
+
+
+State any two security issues in cloud.
+
+
+State any two security threats implementing SaaS.
+
+
+Define security governance.
+
+
+State third party risk management.
+
+
+Name the layers in security architecture design.
+
+
+Discuss change management.
+
+
+Define VM security.
+
+
+What do you mean by security awareness in cloud?
+
+
+Explain data privacy.
+
+
+State any two uses of application security.
+
+
+What is meant by vulnerability assessment.
+
+
+What do you mean by security monitoring?
+
+
+State the issues in providing virtual machine security.
+
+
+Outline the main services offered by AWS.
+
+
+What is the use of cloud Watch in Cloud EC2?
+
+
+Give some of the applications of GAE.
+
+
+List the functional models of GAE.
+
+
+Name the different models in hadoop framework.
+
+
+Define SQS and SNS service of AWS cloud.
+
+
+State the advantages of using cloud storage.
+
+
+Differentiate between cloud consumer and producer.
+
+
+Differentiate between service aggregation and service  arbitrage.
+
+
+Show the interaction between the actors in cloud  computing.
+
+
+State the types of cloud storage.
+
+
+Illustrate the major activities of cloud provider.
+
+
+State two characteristics of private cloud.
+
+
+Identify the key features of S3.
+
+
+State any two features of IaaS.
+
+
+State any two benefits of using platform as a service.
+
+
+State any two drawbacks of using platform as a  service.
+
+
+Describe the NIST cloud computing reference  architecture.
+
+
+Give the diagram of cloud computing reference  architecture.
+
+
+Give the diagram of cloud computing reference  architecture.
+
+
+List and discuss the principles for designing public  cloud, private cloud and hybrid cloud.
+
+
+Describe cloud deployment models with neat  diagrams.
+
+
+Briefly discuss the architectural design challenges of  the cloud.
+
+
+Discuss the features of infrastructure as a service.
+
+
+Describe in details about IaaS with examples.
+
+	
+Point out the features of platform as a service.
+
+
+Discuss in detail about PaaS with example.
+
+
+Describe in detail about cloud storage in detail with  example.
+
+
+Explain the features of software as a service.
+
+
+Discuss in detail about SaaS with example.
+
+
+List out the Cloud Storage Providers.
+
+
+Describe in detail with neat diagram in detail about  inter cloud resource management.
+
+
+Discuss different types of resource provisioning.
+
+
+Write short notes on Demand Driven Resource  Provisioning
+
+
+Write short note  on Event Driven Resource  Provisioning.
+
+
+Write short note  on Popularity Driven Resource   Provisioning.
+
+
+List the four levels of cloud federation.
+
+
+Explain in detail about security monitoring and incident  response.
+
+
+Describe the secure software development life cycle  with neat diagram.
+
+
+Discuss briefly about security architecture of cloud.
+
+
+Give the importance of cloud computing.
+
+
+List the core features of cloud computing.
+
+
+Compare the three milestones which led to cloud  computing in detail.
+
+
+Summarize the open challenges in cloud computing.
+
+
+How does cloud computing development differentiate  from traditional software development?
+
+
+Comment on REST Architechtural elements.
+
+
+Give the sample REST Request-Response for creating  a S3 Bucket.
+
+
+Describe in detail about the REST a software  architecture style for distributed systems.
+
+
+Describe in detail about practical examples of cloud  systems exist across market segments.
+
+
+Illustrate in detail about parallel and distributed  computing.
+
+
+Describe in detail about cloud computing reference  model with diagram.
+
+
+Illustrate the types of virtualization in brief.
+
+
+Explain in detail about the characteristics and features  of SOA.
+
+
+Analyze the web services interaction reference  scenario.
+
+
+Explain the different phenomenon that has gained an  interest towards virtualization technologies.
+
+
+Mention about virtual machine manager.
+
+
+Illustrate the three major components of virtualized  environment.
+
+
+Describe how the Open Solaris running on top of  Windows XP via virtual box with neat diagram.
+
+
+Discuss in detail about the four levels of federation in  the cloud.
+
+
+"HDFS is fault tolerant". Is it true? Justify your answer.
+
+
+Illustrate XMPP and its advantages.
+
+
+Examine the architecture of Google File System (GFS).
+
+
+Illustrate dataflow in HDFS during file read/write  operation with suitable diagrams.
+
+Describe the Resource Provisioning and Platform  Deployment.
+
+
+Explain in detail about virtual machine creation and  management.
+
+
+Express in detail about the need of IAM.
+
+
+State the challenges of IAM.
+
+
+What are the programming supports of Google App  Engine? Illustrate in detail about the Google File system.
+
+
+Discuss about the HDFS concepts with suitable  illustrations.
+
+
+Illustrate, how encrypted federation differs from trusted  federation.
+
+
+How cloud federation addresses the limitations in cloud  computing. Explain in detail.
+
+
+Explain in detail about Elasticity in Cloud and On-demand Provisioning.
+
+
+What are the programming supports of Google App  Engine?
+
+
+Analyze how the virtualization technology supports the loud computing.
+
+
+Explain the technologies available for the design of  application by following Service Oriented Architecture(SOA).
+
+
+Give the importance of Virtualization Support and  Disaster Recovery.
+
+
+Explain the virtualization structure for Hypervisor and  Xen Architecture.
+
+
+Explain the open source software software  environment- Hadoop in detail with appropriate diagram.
+
+
+Classify the various ways in input splitting of map  reduce.
+
+
+Briefly explain each of the cloud computing services.
+
+
+It is said, ‘cloud computing can save money’. What is  your view?
+
+
+Can you name some open source cloud computing  platform databases? Explain any one database in detail.
+
+
+What are the advantages of Cloud Computing over the  Internet? Explain?
+
+	
+Give the architecture of P2P systems. What are the  major categories of P2P Network families?
+
+
+Discuss in detail different system models for distributed  and cloud computing.
+
+
+Justify the speed vs. cost relation in parallel  computing?
+
+
+"Parallel computing is called tightly coupled” - explain?

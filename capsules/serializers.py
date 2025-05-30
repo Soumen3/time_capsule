@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class CapsuleRecipientSerializer(serializers.ModelSerializer):
     class Meta:
         model = CapsuleRecipient
-        fields = ['recipient_email'] # Add other fields if needed for response
+        fields = ['recipient_email', 'received_status'] # Add other fields if needed for response
 
 class CapsuleContentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -137,3 +137,39 @@ class CapsuleSerializer(serializers.ModelSerializer):
             logger.warning(f"Capsule ID {capsule.id} has no valid delivery date/time for scheduling email.")
 
         return capsule
+
+# --- Serializers for Public Capsule View ---
+
+class PublicCapsuleContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CapsuleContent
+        fields = ['id', 'content_type', 'text_content', 'file', 'order'] # Exclude upload_date for public?
+        read_only_fields = fields
+
+class PublicCapsuleOwnerSerializer(serializers.Serializer): # Simple serializer for owner's name
+    name = serializers.CharField()
+    # Add other public-safe owner fields if needed, e.g., a public profile URL
+
+class PublicCapsuleSerializer(serializers.ModelSerializer):
+    contents = PublicCapsuleContentSerializer(many=True, read_only=True)
+    # Instead of full owner object, provide a simplified owner representation
+    # This assumes your User model has a 'name' attribute. Adjust if different.
+    owner_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Capsule
+        fields = [
+            'id', 'title', 'description', 
+            'delivery_date', # To show when it was unsealed
+            'owner_name', # Simplified owner info
+            'contents'
+        ]
+        read_only_fields = fields
+
+    def get_owner_name(self, obj):
+        owner = obj.owner
+        if hasattr(owner, 'name') and owner.name:
+            return owner.name
+        elif hasattr(owner, 'email') and owner.email: # Fallback, consider privacy implications
+            return owner.email.split('@')[0] # Example: show only username part
+        return "The Sender"

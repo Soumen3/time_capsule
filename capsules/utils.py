@@ -9,14 +9,15 @@ logger = logging.getLogger(__name__) # Get a logger instance
 if hasattr(settings, 'DISABLE_LOGGING'):
     logger.disabled = settings.DISABLE_LOGGING
 
-def send_capsule_link_email(recipient_email, capsule_title, capsule_id, owner_name, text_content=None):
+def send_capsule_link_email(recipient_email, capsule_title, capsule_id, owner_name, access_token, text_content=None):
     """
-    Sends an email to the recipient with a link to view the capsule.
+    Sends an email to the recipient with a unique link to view the capsule.
     Optionally includes text_content in the email body, styled with HTML.
     Returns: (bool, str_or_None) -> (success_status, message_or_error_string)
     """
     frontend_base_url = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5173')
-    capsule_link = f"{frontend_base_url}/capsule/{capsule_id}/"
+    # Use the access_token for the public viewing link
+    capsule_link = f"{frontend_base_url}/view-capsule/{access_token}/"
 
     subject = f"A Time Capsule from {owner_name} is ready for you!"
     
