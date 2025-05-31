@@ -21,7 +21,7 @@ const ImageWithLoader = ({ src, alt }) => {
       )}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 p-2">
-          <p className="font-semibold">Error loading image.</p>
+          <p className="font-semibold">Error loading image. {error}</p>
           <p className="text-xs truncate max-w-full">{alt}</p>
         </div>
       )}
@@ -93,6 +93,7 @@ const CapsuleDetailsPage = () => {
   const getFilenameFromUrl = (url) => {
     if (!url) return 'file';
     try {
+      console.log(url)
       const path = new URL(url).pathname;
       return path.substring(path.lastIndexOf('/') + 1);
     } catch (e) {

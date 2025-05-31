@@ -236,7 +236,7 @@ AWS_ACCESS_KEY_ID = config('IAM_USER_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = config('IAM_USER_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config('S3BUCKET_NAME')
 AWS_S3_REGION_NAME = config('REGION')  # e.g., 'us-west-2'
-AWS_QUERYSTRING_AUTH = True  # Optional: to make the URLs public
+AWS_QUERYSTRING_AUTH = False  # Optional: to make the URLs public
 
 STORAGES = {
     'default': {
