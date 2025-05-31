@@ -6,6 +6,9 @@ from django.core.validators import FileExtensionValidator # Import for file vali
 import datetime # Import datetime
 import uuid # Import UUID for access tokens
 import os # Import os for path joining
+import logging # Import the logging library
+
+logger = logging.getLogger(__name__) # Get a logger instance for this module
 
 # --- Choices for CharFields to ensure data consistency ---
 class CapsuleDeliveryMethod(models.TextChoices):
@@ -151,7 +154,7 @@ class CapsuleContent(models.Model):
     """
     capsule = models.ForeignKey(
         'Capsule', # Use string reference if Capsule is defined later or in another app
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE, # <--- This is important
         related_name='contents',
         help_text="The capsule this content belongs to."
     )
@@ -165,7 +168,7 @@ class CapsuleContent(models.Model):
         help_text="Text content for 'text' type capsules. Null for file-based content."
     )
     file = models.FileField(
-        upload_to=user_capsule_content_path, # Use the custom path function
+        upload_to=user_capsule_content_path, 
         blank=True, null=True,
         # Validators for common media and document file extensions
         validators=[
@@ -188,6 +191,22 @@ class CapsuleContent(models.Model):
         default=0,
         help_text="Order of content within a capsule (for display purposes)."
     )
+
+    def delete(self, *args, **kwargs):
+        file_path = None
+        if self.file:
+            file_path = self.file.name
+            logger.info(f"Attempting to delete file from storage: {file_path} for CapsuleContent ID: {self.id}")
+            try:
+                self.file.delete(save=False)
+                logger.info(f"Successfully deleted file from storage: {file_path}")
+            except Exception as e:
+                logger.error(f"Error deleting file {file_path} from storage: {e}", exc_info=True)
+                # Decide if you want to proceed with DB deletion even if file deletion fails.
+                # For now, we'll log the error and continue to delete the DB record.
+        
+        super().delete(*args, **kwargs) # Call the "real" delete() method
+        logger.info(f"Successfully deleted CapsuleContent record ID: {self.id} from database (associated file: {file_path or 'N/A'}).")
 
     class Meta:
         verbose_name = "Capsule Content"

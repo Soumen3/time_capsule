@@ -94,11 +94,22 @@ const getPublicCapsuleByToken = async (token) => {
   }
 };
 
+const deleteCapsule = async (capsuleId) => {
+  try {
+    const response = await api.delete(`/capsules/${capsuleId}/delete/`);
+    return response.data; // Or response itself if 204 No Content
+  } catch (error) {
+    console.error(`Error deleting capsule ${capsuleId}:`, error.response || error);
+    throw error;
+  }
+};
+
 const capsuleService = {
   createCapsule,
   getCapsules,
   getCapsuleById, // Add the new function
   getPublicCapsuleByToken, // New method for fetching public capsule data
+  deleteCapsule, // New method for deleting a capsule
 };
 
 export default capsuleService;

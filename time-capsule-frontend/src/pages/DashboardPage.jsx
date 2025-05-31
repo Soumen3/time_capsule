@@ -43,12 +43,17 @@ const DashboardPage = () => {
     };
 
     checkAuthAndLoadCapsules();
-  }, [navigate, showNotification]);
+  }, [navigate, showNotification]); // Removed userCapsules from dependency array to prevent re-fetch on local state update
 
   const handleLogout = () => {
     authService.logout();
     showNotification('You have been logged out.', 'info'); // Show logout notification
     navigate('/login');
+  };
+
+  const handleCapsuleDeleteSuccess = (deletedCapsuleId) => {
+    setUserCapsules(prevCapsules => prevCapsules.filter(capsule => capsule.id !== deletedCapsuleId));
+    // No need to re-fetch, just update local state
   };
 
   if (loading) {
@@ -103,10 +108,10 @@ const DashboardPage = () => {
       )}
 
       <div className="w-full max-w-4xl space-y-8">
-        <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" />
-        <CapsuleList capsules={deliveredCapsules} title="Delivered (Not Yet Opened)" />
-        <CapsuleList capsules={openedCapsules} title="Opened Capsules" />
-        {/* <CapsuleList capsules={draftCapsules} title="Draft Capsules" /> */}
+        <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
+        <CapsuleList capsules={deliveredCapsules} title="Delivered (Not Yet Opened)" onDeleteSuccess={handleCapsuleDeleteSuccess} />
+        <CapsuleList capsules={openedCapsules} title="Opened Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
+        <CapsuleList capsules={draftCapsules} title="Draft Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
       </div>
 
     </MainLayout>

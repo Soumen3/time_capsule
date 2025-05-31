@@ -68,6 +68,26 @@ class CapsuleDetailView(APIView): # Example: A view to get details of a single c
         serializer = CapsuleSerializer(capsule, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class CapsuleDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer] # Or default JSONRenderer if no custom rendering needed
+
+    def delete(self, request, pk, *args, **kwargs):
+        try:
+            capsule = Capsule.objects.get(pk=pk, owner=request.user)
+        except Capsule.DoesNotExist:
+            return Response({"error": "Capsule not found or you do not have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Perform the deletion
+        # This will also delete related CapsuleContent and CapsuleRecipient objects due to on_delete=models.CASCADE
+        # If using S3, django-storages should handle deleting files from S3.
+        capsule_title = capsule.title # For logging or response message
+        capsule.delete()
+        
+        logger.info(f"Capsule '{capsule_title}' (ID: {pk}) deleted by user {request.user.email}.")
+        return Response({"message": f"Capsule '{capsule_title}' successfully deleted."}, status=status.HTTP_204_NO_CONTENT)
+
+
 class CapsuleViewSet(viewsets.ModelViewSet):
     # Assuming you will define this viewset for other capsule-related actions
     queryset = Capsule.objects.all()

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CreateCapsuleView, CapsuleDetailView, CapsuleListView, CapsuleViewSet, PublicCapsuleRetrieveView
+from .views import CreateCapsuleView, CapsuleDetailView, CapsuleListView, CapsuleViewSet, PublicCapsuleRetrieveView, CapsuleDeleteView
 
 # Define URL patterns for the capsules app
 router = DefaultRouter()
@@ -12,4 +12,5 @@ urlpatterns = [
     path('', CapsuleListView.as_view(), name='capsule_list'),  # List all capsules for the authenticated user
     path('', include(router.urls)),
     path('public/capsules/<uuid:access_token>/', PublicCapsuleRetrieveView.as_view(), name='public-capsule-detail'),
+    path('<int:pk>/delete/', CapsuleDeleteView.as_view(), name='capsule_delete'),  # Add delete URL
 ]
