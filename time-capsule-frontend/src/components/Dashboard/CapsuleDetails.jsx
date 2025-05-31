@@ -4,6 +4,45 @@ import capsuleService from '../../services/capsule'; // Adjust path as needed
 import MainLayout from '../Layout/MainLayout'; // Adjust path as needed
 import Button from '../Button'; // Adjust path as needed
 
+// Helper component to handle image loading state
+const ImageWithLoader = ({ src, alt }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="relative min-h-[100px] flex items-center justify-center bg-gray-100 rounded-md border"> {/* Added min-h for placeholder */}
+      {loading && !error && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 p-2">
+          <p className="font-semibold">Error loading image.</p>
+          <p className="text-xs truncate max-w-full">{alt}</p>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`max-w-full h-auto rounded-md shadow-sm transition-opacity duration-300 ${loading || error ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={() => {
+          setLoading(false);
+          setError(false);
+        }}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
+        style={{ display: error ? 'none' : 'block' }} // Hide img if error, placeholder will show
+      />
+    </div>
+  );
+};
+
 const CapsuleDetailsPage = () => {
   const { capsuleId } = useParams();
   const navigate = useNavigate();
@@ -105,10 +144,9 @@ const CapsuleDetailsPage = () => {
                 {content.file && (
                   <div className="mt-2">
                     {content.content_type === 'image' && (
-                      <img 
+                      <ImageWithLoader 
                         src={content.file} 
                         alt={getFilenameFromUrl(content.file)} 
-                        className="max-w-full h-auto rounded-md border shadow-sm" 
                       />
                     )}
                     {content.content_type === 'video' && (

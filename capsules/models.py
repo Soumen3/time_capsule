@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.core.validators import FileExtensionValidator # Import for file validation
 import datetime # Import datetime
 import uuid # Import UUID for access tokens
+import os # Import os for path joining
 
 # --- Choices for CharFields to ensure data consistency ---
 class CapsuleDeliveryMethod(models.TextChoices):
@@ -122,6 +123,27 @@ class Capsule(models.Model):
 
 
 # --- Capsule Content Model (Handles Text, Images, Videos, Documents, Audio) ---
+def user_capsule_content_path(instance, filename):
+    """
+    Generates a unique path for uploaded capsule content files.
+    Path: capsule_files/<user_email_sanitized>/capsule_<capsule_id>/<filename>
+    
+    Note: Using user email directly in paths can be problematic if emails contain
+    special characters not suitable for all filesystems or S3 key names.
+    Consider sanitizing the email or using user_id instead for robustness.
+    For S3, most characters are fine, but it's a good practice to be mindful.
+    """
+    # Sanitize email to be filesystem/URL friendly
+    user_email_path_segment = instance.capsule.owner.email.replace('@', '_at_').replace('.', '_dot_')
+    # Further sanitize by removing characters not typically allowed in directory names
+    # This is a basic example; a more robust slugify function might be better.
+    user_email_path_segment = "".join(c if c.isalnum() or c in ['_', '-'] else '_' for c in user_email_path_segment)
+    
+    capsule_id_path_segment = f"capsule_{instance.capsule.id}"
+    
+    # Path will be capsule_files/sanitized_email/capsule_id/filename
+    return os.path.join('capsule_files', user_email_path_segment, capsule_id_path_segment, filename)
+
 class CapsuleContent(models.Model):
     """
     Stores individual content items for a time capsule.
@@ -143,16 +165,16 @@ class CapsuleContent(models.Model):
         help_text="Text content for 'text' type capsules. Null for file-based content."
     )
     file = models.FileField(
-        upload_to='capsule_files/', # Files will be stored in your MEDIA_ROOT/capsule_files/
+        upload_to=user_capsule_content_path, # Use the custom path function
         blank=True, null=True,
         # Validators for common media and document file extensions
         validators=[
             FileExtensionValidator(
                 allowed_extensions=[
-                    'jpg', 'jpeg', 'png', 'gif', 'webp', # Images
-                    'mp4', 'avi', 'mov', 'webm', # Videos
-                    'mp3', 'wav', 'ogg', # Audio
-                    'pdf', 'doc', 'docx', 'txt', 'rtf' # Documents
+                    'jpg', 'jpeg', 'png', 'gif', 'webp', '.bmp', '.tiff', # Images
+                    'mp4', 'avi', 'mov', 'webm',  '.mkv', '.flv', '.wmv', # Videos
+                    'mp3', 'wav', 'ogg', 'm4a', '.flac', '.aac', '.wma',  # Audio
+                    'pdf', 'doc', 'docx', 'txt', 'rtf', '.odt', '.epub'# Documents
                 ]
             )
         ],

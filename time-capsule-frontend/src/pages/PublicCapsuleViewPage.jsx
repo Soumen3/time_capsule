@@ -9,6 +9,45 @@ const PublicCapsuleViewPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Helper for image loading state, specific to this page
+  const ImageRenderer = ({ src, alt }) => {
+    const [imgLoading, setImgLoading] = useState(true);
+    const [imgError, setImgError] = useState(false);
+
+    return (
+      <div className="relative min-h-[200px] flex items-center justify-center bg-gray-100 rounded-lg shadow-md">
+        {imgLoading && !imgError && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <svg className="animate-spin h-10 w-10 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        )}
+        {imgError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 p-4 text-center">
+            <p className="font-semibold">Could not load image.</p>
+            <p className="text-xs truncate max-w-full">{alt}</p>
+          </div>
+        )}
+        <img
+          src={src}
+          alt={alt}
+          className={`max-w-full h-auto rounded-lg shadow-md inline-block transition-opacity duration-500 ${imgLoading || imgError ? 'opacity-0' : 'opacity-100'}`}
+          style={{ maxHeight: '500px', display: imgError ? 'none' : 'inline-block' }}
+          onLoad={() => {
+            setImgLoading(false);
+            setImgError(false);
+          }}
+          onError={() => {
+            setImgLoading(false);
+            setImgError(true);
+          }}
+        />
+      </div>
+    );
+  };
+
   useEffect(() => {
     const fetchCapsule = async () => {
       if (!accessToken) {
@@ -48,6 +87,22 @@ const PublicCapsuleViewPage = () => {
     // If not, you'll need to construct it:
     // const fullMediaUrl = item.file ? `${import.meta.env.VITE_API_DOMAIN || 'http://localhost:8000'}${item.file}` : null;
 
+    const getCleanFilename = (url) => {
+      if (!url) return 'Unnamed Document';
+      try {
+        // Create a URL object. This works even if the URL has query params.
+        const urlObject = new URL(url);
+        // Get the pathname (e.g., /media/capsule_files/700-review-1785.pdf)
+        const pathname = urlObject.pathname;
+        // Get the last part of the pathname
+        return pathname.substring(pathname.lastIndexOf('/') + 1);
+      } catch (e) {
+        // Fallback for invalid URLs or if it's just a simple string
+        const parts = url.split('/').pop();
+        return parts.split('?')[0]; // Attempt to remove query string as a fallback
+      }
+    };
+
 
     switch (item.content_type) {
       case 'text':
@@ -60,7 +115,7 @@ const PublicCapsuleViewPage = () => {
       case 'image':
         return (
           <div className="mb-4 text-center">
-            <img src={item.file} alt="Capsule content" className="max-w-full h-auto rounded-lg shadow-md inline-block" style={{ maxHeight: '500px' }} />
+            <ImageRenderer src={item.file} alt={getCleanFilename(item.file) || 'Capsule image'} />
           </div>
         );
       case 'video':
@@ -83,7 +138,7 @@ const PublicCapsuleViewPage = () => {
         return (
           <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md shadow-sm">
             <a href={item.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium underline">
-              View Document: {item.file ? item.file.split('/').pop() : 'Unnamed Document'}
+              View Document: {getCleanFilename(item.file)}
             </a>
             <p className="text-sm text-gray-500 mt-1">Click to open the document in a new tab.</p>
           </div>

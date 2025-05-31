@@ -153,9 +153,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = '/media/'
-
 # Email Configuration
 # Ensure EMAIL_USER environment variable is set to your Gmail address (e.g., your.email@gmail.com)
 # Ensure EMAIL_PASS environment variable is set to your Gmail App Password if 2FA is ON, or regular password if 2FA is OFF and Less Secure Apps is ON.
@@ -228,3 +225,34 @@ LOGGING = {
         }
     }
 }
+
+
+
+
+
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = config('IAM_USER_ACCESS_KEY')
+AWS_SECRET_ACCESS_KEY = config('IAM_USER_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('S3BUCKET_NAME')
+AWS_S3_REGION_NAME = config('REGION')  # e.g., 'us-west-2'
+AWS_QUERYSTRING_AUTH = True  # Optional: to make the URLs public
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'OPTIONS': {
+            'access_key': AWS_ACCESS_KEY_ID,
+            'secret_key': AWS_SECRET_ACCESS_KEY,
+            'bucket_name': AWS_STORAGE_BUCKET_NAME,
+            'region_name': AWS_S3_REGION_NAME,
+        },
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+# Ensure MEDIA_URL is set to the S3 bucket URL
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+MEDIA_ROOT = BASE_DIR / "media"

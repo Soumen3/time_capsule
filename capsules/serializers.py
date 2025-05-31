@@ -50,13 +50,13 @@ class CapsuleSerializer(serializers.ModelSerializer):
         # Basic content type detection based on file extension
         # You might want a more robust solution (e.g., using python-magic)
         name = file.name.lower()
-        if name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+        if name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff')):
             return CapsuleContentType.IMAGE
-        elif name.endswith(('.mp4', '.avi', '.mov', '.webm')):
+        elif name.endswith(('.mp4', '.avi', '.mov', '.webm', '.mkv', '.flv', '.wmv')):
             return CapsuleContentType.VIDEO
-        elif name.endswith(('.mp3', '.wav', '.ogg')):
+        elif name.endswith(('.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac', '.wma')):
             return CapsuleContentType.AUDIO
-        elif name.endswith(('.pdf', '.doc', '.docx', '.txt', '.rtf')):
+        elif name.endswith(('.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.epub')):
             return CapsuleContentType.DOCUMENT
         return CapsuleContentType.DOCUMENT # Default or raise error
 
