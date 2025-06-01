@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import authService from './services/auth'; 
 
 // Import Layout Components
-import MainLayout from './components/Layout/MainLayout'; 
+// import MainLayout from './components/Layout/MainLayout'; // No longer directly needed here if pages don't import it
+import ProtectedLayout from './components/Layout/ProtectedLayout'; // Import the new layout component
 
 // Import Page Components
 import LoginPage from './pages/Auth/LoginPage'; 
@@ -17,6 +18,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'; // Add this import
+import NotificationPage from './pages/NotificationPage'; // Import NotificationPage
+
 
 import { NotificationProvider, useNotification } from './hooks/useNotification.jsx'; // Ensure this path is correct
 
@@ -52,18 +55,21 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} /> {/* Dynamic reset password route */}
-          <Route path="/auth-redirect" element={<AuthRedirect />} /> {/* Redirects to dashboard or login based on auth state */}
+          <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
           
-          {/* Protected routes */}
-
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/create-capsule" element={<CapsuleCreatorPage />} />
-          <Route path="/capsule/:capsuleId" element={<CapsuleDetailsPage />} /> {/* Add route for capsule details */}
-          <Route path="/view-capsule/:accessToken" element={<PublicCapsuleViewPage />} /> {/* New public route */}
+          {/* Protected routes now wrapped by ProtectedLayout */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/create-capsule" element={<CapsuleCreatorPage />} />
+            <Route path="/capsule/:capsuleId" element={<CapsuleDetailsPage />} />
+            <Route path="/notifications" element={<NotificationPage />} />
+          </Route>
           
-          <Route path="/" element={<LandingPage />} /> {/* Default to Landing Page */}
-          <Route path="*" element={<NotFoundPage />} /> {/* Catch-all for undefined routes */}
+          {/* Publicly accessible routes */}
+          <Route path="/view-capsule/:accessToken" element={<PublicCapsuleViewPage />} />
+          
+          <Route path="/" element={<LandingPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </NotificationProvider>
     </Router>

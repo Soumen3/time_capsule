@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/auth';
 import capsuleService from '../services/capsule'; // Import capsuleService
-import MainLayout from '../components/Layout/MainLayout';
+// import MainLayout from '../components/Layout/MainLayout'; // REMOVE THIS
 import CapsuleList from '../components/Dashboard/CapsuleList';
 import { useNotification } from '../hooks/useNotification'; // Import useNotification
 
@@ -92,8 +92,9 @@ const DashboardPage = () => {
   const draftCapsules = processedCapsules.filter(c => c.status === 'draft'); // Or however 'draft' is determined
 
   return (
-    <MainLayout>
-      <div className="w-full max-w-4xl bg-white p-8 rounded-xl shadow-2xl text-center mb-8">
+    // <MainLayout> REMOVE THIS
+    <> {/* Or a div if you need a single root for styling this page's content specifically */}
+      <div className="w-full max-w-4xl bg-white p-8 rounded-xl shadow-2xl text-center mb-8 mx-auto">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Dashboard</h2>
         <p className="text-lg text-gray-600 mb-8">
           Welcome to your personal Time Capsule dashboard, {user?.email || 'User'}!
@@ -101,20 +102,20 @@ const DashboardPage = () => {
       </div>
 
       {fetchError && (
-        <div className="w-full max-w-4xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+        <div className="w-full max-w-4xl bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 mx-auto" role="alert"> {/* Added mx-auto */}
           <strong className="font-bold">Error:</strong>
           <span className="block sm:inline"> {fetchError}</span>
         </div>
       )}
 
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-4xl space-y-8 mx-auto"> {/* Added mx-auto */}
         <CapsuleList capsules={sealedCapsules} title="Sealed & Upcoming Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
         <CapsuleList capsules={deliveredCapsules} title="Delivered (Not Yet Opened)" onDeleteSuccess={handleCapsuleDeleteSuccess} />
         <CapsuleList capsules={openedCapsules} title="Opened Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
-        <CapsuleList capsules={draftCapsules} title="Draft Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} />
+        {/* <CapsuleList capsules={draftCapsules} title="Draft Capsules" onDeleteSuccess={handleCapsuleDeleteSuccess} /> */}
       </div>
 
-    </MainLayout>
+    </> // </MainLayout> REMOVE THIS
   );
 };
 

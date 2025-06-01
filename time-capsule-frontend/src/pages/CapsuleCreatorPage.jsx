@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/auth'; // Adjust path if needed
 import capsuleService from '../services/capsule'; // Import the capsule service
-import MainLayout from '../components/Layout/MainLayout'; // Adjust path if needed
 import Button from '../components/Button'; // Adjust path if needed
 import Input from '../components/Input';
 import Textarea from '../components/Textarea';
@@ -373,15 +372,13 @@ const CapsuleCreatorPage = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="w-full max-w-3xl bg-white p-8 rounded-xl shadow-2xl text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Create Your Time Capsule</h2>
-        {/* Global error/success for page level if needed, or use a notification component */}
-        <div className="p-6 border border-gray-200 rounded-lg text-left">
-          {renderStepContent()}
-        </div>
+    <div className="w-full max-w-3xl bg-white p-8 rounded-xl shadow-2xl text-center mx-auto">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Create Your Time Capsule</h2>
+      {/* Global error/success for page level if needed, or use a notification component */}
+      <div className="p-6 border border-gray-200 rounded-lg text-left">
+        {renderStepContent()}
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

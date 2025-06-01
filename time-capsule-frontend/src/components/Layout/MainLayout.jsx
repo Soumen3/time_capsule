@@ -1,7 +1,7 @@
 // src/components/Layout/MainLayout.jsx
 import React from 'react';
-import Navbar from './Navbar'; // Import the Navbar component
-import Footer from './Footer'; // Adjust path if needed
+import Navbar from './Navbar'; // Make sure Navbar is imported
+import Footer from './Footer'; // If you have a Footer component
 
 /**
  * MainLayout component provides a consistent layout for authenticated pages.
@@ -13,15 +13,13 @@ import Footer from './Footer'; // Adjust path if needed
  */
 const MainLayout = ({ children }) => {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 font-inter">
-      {/* The Navbar will appear at the top of all pages using this layout */}
-      <Navbar />
-      {/* The main content area, where specific page components will be rendered */}
-      <main className="flex-grow container mx-auto p-4 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <Navbar /> {/* Ensure Navbar is rendered */}
+      <main className="flex-grow container mx-auto px-4 py-8">
         {children}
       </main>
-      {/* The Footer will appear at the bottom */}
       <Footer />
+      {/* You might want a global notification toast container here if not already handled by NotificationProvider */}
     </div>
   );
 };

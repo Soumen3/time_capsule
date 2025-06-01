@@ -3,8 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import CapsuleSerializer, PublicCapsuleSerializer 
-from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleRecipientStatus # Ensure CapsuleRecipientStatus is imported
+from .serializers import CapsuleSerializer, PublicCapsuleSerializer, NotificationSerializer, NotificationSerializer
+from .models import (
+    Capsule, 
+    CapsuleContent, 
+    CapsuleRecipient, 
+    CapsuleRecipientStatus, 
+    Notification, 
+    NotificationType)
 from django.utils import timezone
 from django.http import Http404
 from .renderer import CapsuleRenderer
@@ -31,6 +37,19 @@ class CreateCapsuleView(APIView):
         if serializer.is_valid():
             # The owner is set within the serializer's create method using self.context['request'].user
             capsule = serializer.save() 
+
+            # Create a notification for the owner
+            try:
+                Notification.objects.create(
+                    user=capsule.owner,
+                    capsule=capsule,
+                    message=f"Your time capsule '{capsule.title}' has been successfully created and sealed.",
+                    notification_type=NotificationType.CAPSULE_CREATED 
+                )
+                logger.info(f"Notification created for capsule ID {capsule.id} creation, user {capsule.owner.email}")
+            except Exception as e:
+                logger.error(f"Failed to create notification for capsule ID {capsule.id} creation: {e}")
+
             # Re-serialize the created capsule instance to include related objects for the response
             response_serializer = CapsuleSerializer(capsule, context={'request': request})
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -145,16 +164,105 @@ class PublicCapsuleRetrieveView(generics.RetrieveAPIView):
             # recipient.opened_at = timezone.now() 
             recipient.save(update_fields=['received_status'])
             logger.info(f"Capsule ID {capsule.id} opened by recipient {recipient.recipient_email} via token {access_token}.")
+
+            # Create a notification for the capsule owner
+            try:
+                Notification.objects.create(
+                    user=capsule.owner,
+                    capsule=capsule,
+                    message=f"Your time capsule '{capsule.title}' was opened by {recipient.recipient_email}.",
+                    notification_type=NotificationType.CAPSULE_OPENED
+                )
+                logger.info(f"Notification created for capsule ID {capsule.id} opened by {recipient.recipient_email}, for owner {capsule.owner.email}")
+            except Exception as e:
+                logger.error(f"Failed to create notification for capsule ID {capsule.id} opening: {e}")
+
         elif recipient.received_status == CapsuleRecipientStatus.PENDING and delivery_datetime_aware <= current_datetime:
             # If for some reason the status was PENDING but it's now due and accessed, mark as OPENED.
             # This might indicate an issue in the delivery task not updating status to SENT.
             recipient.received_status = CapsuleRecipientStatus.OPENED
             recipient.save(update_fields=['received_status'])
             logger.info(f"Capsule ID {capsule.id} (status PENDING) opened by recipient {recipient.recipient_email} via token {access_token}.")
+            # Also create a notification for the owner in this case
+            try:
+                Notification.objects.create(
+                    user=capsule.owner,
+                    capsule=capsule,
+                    message=f"Your time capsule '{capsule.title}' was opened by {recipient.recipient_email} (was pending).",
+                    notification_type=NotificationType.CAPSULE_OPENED
+                )
+                logger.info(f"Notification created for capsule ID {capsule.id} opened (from pending) by {recipient.recipient_email}, for owner {capsule.owner.email}")
+            except Exception as e:
+                logger.error(f"Failed to create notification for capsule ID {capsule.id} opening (from pending): {e}")
 
 
         return capsule
 
 # In your urls.py, you would have a path like:
 # path('capsules/<int:pk>/', CapsuleDetailView.as_view(), name='capsule-detail'),
-# path('public-capsule/<uuid:access_token>/', PublicCapsuleRetrieveView.as_view(), name='public-capsule-detail'),
+# path('public-capsule/<uuid:access_token>/', PublicCapsuleRetrieveView.as_view(), name='public-capsule-detail')
+
+
+# --- Notification Views ---
+
+class NotificationListView(generics.ListAPIView):
+    """
+    List all notifications for the authenticated user.
+    Optionally filter by 'is_read' status.
+    """
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer] # Or your default renderer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Notification.objects.filter(user=user).order_by('-created_at')
+        
+        is_read_param = self.request.query_params.get('is_read')
+        if is_read_param is not None:
+            if is_read_param.lower() == 'true':
+                queryset = queryset.filter(is_read=True)
+            elif is_read_param.lower() == 'false':
+                queryset = queryset.filter(is_read=False)
+        return queryset
+
+class NotificationMarkReadView(APIView):
+    """
+    Mark a specific notification as read.
+    """
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer]
+
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            notification = Notification.objects.get(pk=pk, user=request.user)
+            if not notification.is_read:
+                notification.is_read = True
+                notification.read_at = timezone.now()
+                notification.save(update_fields=['is_read', 'read_at'])
+            serializer = NotificationSerializer(notification)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Notification.DoesNotExist:
+            return Response({"error": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class NotificationMarkAllReadView(APIView):
+    """
+    Mark all unread notifications for the user as read.
+    """
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer]
+
+    def post(self, request, *args, **kwargs):
+        updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True, read_at=timezone.now())
+        return Response({"message": f"{updated_count} notifications marked as read."}, status=status.HTTP_200_OK)
+
+class UnreadNotificationCountView(APIView):
+    """
+    Get the count of unread notifications for the authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [CapsuleRenderer] # Or default JSONRenderer
+
+    def get(self, request, *args, **kwargs):
+        count = Notification.objects.filter(user=request.user, is_read=False).count()
+        return Response({'unread_count': count}, status=status.HTTP_200_OK)

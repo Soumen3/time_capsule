@@ -42,9 +42,11 @@ class DeliveryLogStatus(models.TextChoices):
     PENDING = 'pending', 'Pending (e.g., for async email service)'
 
 class NotificationType(models.TextChoices):
+    CAPSULE_CREATED= 'capsule_created', 'Capsule Created'
     DELIVERY_SUCCESS = 'delivery_success', 'Capsule Delivered'
     DELIVERY_FAIL = 'delivery_fail', 'Capsule Delivery Failed'
     NEW_SHARED_CAPSULE = 'new_shared_capsule', 'New Shared Capsule'
+    CAPSULE_OPENED = 'capsule_opened', 'Capsule Opened' # New type
     REMINDER = 'reminder', 'Reminder'
     SYSTEM_ALERT = 'system_alert', 'System Alert'
     TRANSFER_NOTIFICATION = 'transfer_notification', 'Capsule Transferred'

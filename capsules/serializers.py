@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleContentType, CapsuleRecipientStatus
+from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleContentType, CapsuleRecipientStatus, Notification
 from django.utils import timezone
 from .tasks import deliver_capsule_email_task
 import datetime
@@ -173,3 +173,22 @@ class PublicCapsuleSerializer(serializers.ModelSerializer):
         elif hasattr(owner, 'email') and owner.email: # Fallback, consider privacy implications
             return owner.email.split('@')[0] # Example: show only username part
         return "The Sender"
+
+class NotificationSerializer(serializers.ModelSerializer):
+    capsule_title = serializers.CharField(source='capsule.title', read_only=True, allow_null=True)
+    created_at_formatted = serializers.DateTimeField(source='created_at', format="%b %d, %Y %I:%M %p", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            'id', 
+            'message', 
+            'notification_type', 
+            'is_read', 
+            'created_at',
+            'created_at_formatted',
+            'read_at', 
+            'capsule', # Send capsule ID
+            'capsule_title'
+        ]
+        read_only_fields = ['id', 'created_at', 'read_at', 'capsule_title']

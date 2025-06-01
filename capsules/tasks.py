@@ -1,7 +1,19 @@
 from celery import shared_task
 from django.utils import timezone
 from django.conf import settings
-from .models import Capsule, CapsuleContent, CapsuleRecipient, CapsuleRecipientStatus, DeliveryLog, CapsuleDeliveryMethod, DeliveryLogStatus, CapsuleContentType # Import CapsuleContentType
+from .models import (
+    Capsule, 
+    CapsuleContent, 
+    CapsuleRecipient, 
+    CapsuleRecipientStatus, 
+    DeliveryLog, 
+    CapsuleDeliveryMethod, 
+    DeliveryLogStatus, 
+    CapsuleContentType, 
+    CapsuleContentType,
+    Notification,
+    NotificationType
+)
 from .utils import send_capsule_link_email
 import datetime
 import logging
@@ -84,9 +96,35 @@ def deliver_capsule_email_task(self, capsule_id, recipient_id):
                 details=email_status_message # Store success message
             )
             logger.info(f"Successfully delivered capsule ID {capsule_id} to {recipient.recipient_email}: {email_status_message}")
+
+            # Create "Capsule Delivered" notification for the owner
+            try:
+                Notification.objects.create(
+                    user=capsule.owner,
+                    capsule=capsule,
+                    message=f"Your time capsule '{capsule.title}' has been successfully delivered to {recipient.recipient_email}.",
+                    notification_type=NotificationType.DELIVERY_SUCCESS
+                )
+                logger.info(f"Delivery notification created for capsule ID {capsule.id} to {recipient.recipient_email}")
+            except Exception as e:
+                logger.error(f"Failed to create delivery notification for capsule ID {capsule.id}: {e}")
+            
             return f"Successfully delivered capsule {capsule_id} to {recipient.recipient_email}."
         else:
             # Email sending failed
+            recipient.received_status = CapsuleRecipientStatus.FAILED
+            recipient.save(update_fields=['received_status'])
+            # Create "Capsule Delivery Failed" notification for the owner
+            try:
+                Notification.objects.create(
+                    user=capsule.owner,
+                    capsule=capsule,
+                    message=f"Failed to deliver your time capsule '{capsule.title}' to {recipient.recipient_email}. Reason: {email_status_message}",
+                    notification_type=NotificationType.DELIVERY_FAIL
+                )
+            except Exception as e:
+                logger.error(f"Failed to create delivery failure notification for capsule ID {capsule.id}: {e}")
+
             DeliveryLog.objects.create(
                 capsule=capsule,
                 delivery_method=CapsuleDeliveryMethod.EMAIL,

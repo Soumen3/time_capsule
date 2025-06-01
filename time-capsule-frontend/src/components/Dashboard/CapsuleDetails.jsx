@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import capsuleService from '../../services/capsule'; // Adjust path as needed
-import MainLayout from '../Layout/MainLayout'; // Adjust path as needed
 import Button from '../Button'; // Adjust path as needed
 
 // Helper component to handle image loading state
@@ -70,15 +69,15 @@ const CapsuleDetailsPage = () => {
   }, [capsuleId]);
 
   if (loading) {
-    return <MainLayout><div className="text-center py-10">Loading capsule details...</div></MainLayout>;
+    return <div className="text-center py-10">Loading capsule details...</div>;
   }
 
   if (error) {
-    return <MainLayout><div className="text-center py-10 text-red-500">Error: {error}</div></MainLayout>;
+    return <div className="text-center py-10 text-red-500">Error: {error}</div>;
   }
 
   if (!capsule) {
-    return <MainLayout><div className="text-center py-10">Capsule not found.</div></MainLayout>;
+    return <div className="text-center py-10">Capsule not found.</div>;
   }
 
   const formattedDate = capsule.delivery_date
@@ -105,7 +104,6 @@ const CapsuleDetailsPage = () => {
 
 
   return (
-    <MainLayout>
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
         <Button onClick={() => navigate(-1)} variant="outline" className="mb-6">&larr; Back to Dashboard</Button>
         
@@ -197,7 +195,6 @@ const CapsuleDetailsPage = () => {
             {/* Example: <Button variant="secondary">Edit Capsule</Button> */}
         </div>
       </div>
-    </MainLayout>
   );
 };
 

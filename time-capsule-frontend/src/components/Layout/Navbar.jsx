@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import authService from '../../services/auth';
 import Button from '../Button';
+import { useNotification as useToastNotification } from '../../hooks/useNotification'; // For toast messages
+import NotificationIcon from '../Notification/NotificationIcon'; // Import the new icon
 
 /**
  * Navbar component with modern design and color schemes.
@@ -11,6 +13,8 @@ import Button from '../Button';
 const Navbar = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const { showNotification: showToast } = useToastNotification();
+  const currentUser = authService.getCurrentUser(); // Synchronous check, assumes token is in localStorage
 
   useEffect(() => {
     // getCurrentUser is async, so await its result
@@ -24,6 +28,7 @@ const Navbar = () => {
   const handleLogout = () => {
     authService.logout();
     setUser(null);
+    showToast('You have been logged out.', 'info');
     navigate('/login');
   };
 
@@ -58,6 +63,11 @@ const Navbar = () => {
                 <div className="text-center md:text-left">
                   <div className="text-white/90 font-medium text-sm mb-1">Welcome back!</div>
                   <div className="text-yellow-200 font-semibold text-lg">{user.name}</div>
+                </div>
+
+                {/* Notification Icon - Placed before navigation links for visibility */}
+                <div className="ml-0 md:ml-4"> {/* Add some margin for medium screens and up */}
+                  <NotificationIcon />
                 </div>
 
                 {/* Navigation Links */}
