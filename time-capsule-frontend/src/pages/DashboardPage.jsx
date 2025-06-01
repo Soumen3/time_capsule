@@ -6,6 +6,7 @@ import capsuleService from '../services/capsule'; // Import capsuleService
 // import MainLayout from '../components/Layout/MainLayout'; // REMOVE THIS
 import CapsuleList from '../components/Dashboard/CapsuleList';
 import { useNotification } from '../hooks/useNotification'; // Import useNotification
+import LoadingSpinner from '../components/LoadingSpinner'; // Import the spinner
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -58,8 +59,8 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-gray-700">
-        Loading dashboard...
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="h-16 w-16" />
       </div>
     );
   }

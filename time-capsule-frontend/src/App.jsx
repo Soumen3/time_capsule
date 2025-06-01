@@ -19,6 +19,7 @@ import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'; // Add this import
 import NotificationPage from './pages/NotificationPage'; // Import NotificationPage
+import LoadingSpinner from './components/LoadingSpinner'; // Import the spinner
 
 
 import { NotificationProvider, useNotification } from './hooks/useNotification.jsx'; // Ensure this path is correct
@@ -98,8 +99,11 @@ function LoginPageWrapper() {
   }, [navigate, showNotification]);
 
   if (checking) {
-    // Optionally show a loading spinner or nothing while checking auth
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="h-16 w-16" />
+      </div>
+    );
   }
 
   return <LoginPage />;

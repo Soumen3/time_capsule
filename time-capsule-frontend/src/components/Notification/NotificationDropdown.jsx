@@ -49,7 +49,9 @@ const NotificationDropdown = ({ onClose, onNotificationsRead }) => {
 
   const getNotificationIcon = (type) => {
     switch(type) {
+        case 'capsule_created': return '📦'; // Capsule Created
         case 'delivery_success': return '🎉'; // Capsule Delivered
+        case 'capsule_opened': return '📖'; // Capsule Opened
         case 'delivery_fail': return '⚠️'; // Capsule Delivery Failed
         case 'new_shared_capsule': return '📬'; // New Shared Capsule
         case 'reminder': return '🔔'; // Reminder
@@ -60,7 +62,9 @@ const NotificationDropdown = ({ onClose, onNotificationsRead }) => {
   }
 
   return (
-    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-md shadow-xl z-50 border border-gray-200">
+    <div className="bg-white rounded-md shadow-xl z-50 border border-gray-200 
+                   fixed top-20 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-sm 
+                   sm:absolute sm:top-full sm:mt-2 sm:left-auto sm:translate-x-0 sm:right-0 sm:w-96 sm:max-w-none">
       <div className="p-3 flex justify-between items-center border-b">
         <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
         <Button onClick={handleMarkAllAsRead} variant="link" className="text-sm text-indigo-600 hover:text-indigo-800 p-0">

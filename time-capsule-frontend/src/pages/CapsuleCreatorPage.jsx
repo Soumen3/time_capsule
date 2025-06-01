@@ -9,6 +9,7 @@ import Textarea from '../components/Textarea';
 import MediaUploadInput from '../components/MediaUploadInput'; // Adjust path if needed
 import DatePicker from '../components/DatePicker';
 import TimePicker from '../components/TimePicker';
+import LoadingSpinner from '../components/LoadingSpinner'; // Import the spinner
 // Consider adding a Notification component for user feedback
 // import Notification from '../components/Notification';
 
@@ -43,8 +44,8 @@ const CapsuleCreatorPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-gray-700">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="h-16 w-16" />
       </div>
     );
   }

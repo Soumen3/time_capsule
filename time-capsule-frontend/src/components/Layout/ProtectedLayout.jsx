@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from './MainLayout';
 import authService from '../../services/auth';
-
+import LoadingSpinner from '../LoadingSpinner';
 const ProtectedLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +31,7 @@ const ProtectedLayout = () => {
     // Optional: Display a global loading spinner for the entire page
     return (
         <div className="min-h-screen flex items-center justify-center text-xl text-gray-700 bg-gray-100">
-            Loading Application...
+            <LoadingSpinner size="h-16 w-16" />
         </div>
     );
   }
