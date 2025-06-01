@@ -84,8 +84,12 @@ WSGI_APPLICATION = 'time_capsule_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='time_capsule_db'),
+        'USER': config('DB_USER', default='postgres_user'),
+        'PASSWORD': config('DB_PASSWORD', default='postgres_password'),
+        'HOST': config('DB_HOST', default='localhost'), # Or your DB host
+        'PORT': config('DB_PORT', default='5432'),     # Default PostgreSQL port
     }
 }
 
