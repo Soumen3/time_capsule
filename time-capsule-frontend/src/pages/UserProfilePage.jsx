@@ -142,7 +142,7 @@ const UserProfilePage = () => {
                 id="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                // className="mt-1 block w-full"
+                className="mt-1 block w-full"
               />
             </div>
             <div>
@@ -153,7 +153,7 @@ const UserProfilePage = () => {
                 id="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                // className="mt-1 block w-full"
+                className="mt-1 block w-full"
                 disabled={false} // Typically email is not changed easily or used as an identifier
                 title="Email cannot be changed through this form."
               />

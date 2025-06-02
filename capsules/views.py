@@ -97,13 +97,40 @@ class CapsuleDeleteView(APIView):
         except Capsule.DoesNotExist:
             return Response({"error": "Capsule not found or you do not have permission to delete it."}, status=status.HTTP_404_NOT_FOUND)
         
-        # Perform the deletion
-        # This will also delete related CapsuleContent and CapsuleRecipient objects due to on_delete=models.CASCADE
-        # If using S3, django-storages should handle deleting files from S3.
         capsule_title = capsule.title # For logging or response message
+        owner = capsule.owner
+
+        # --- Placeholder for Celery Task Revocation ---
+        # To revoke a Celery task, you need its task_id.
+        # Assuming you store task_id on the Capsule model, e.g., as 'delivery_task_id':
+        # if capsule.delivery_task_id:
+        #     try:
+        #         from time_capsule_backend.celery import app as celery_app # Ensure Celery app is imported
+        #         celery_app.control.revoke(capsule.delivery_task_id, terminate=True)
+        #         logger.info(f"Revoked Celery task {capsule.delivery_task_id} for capsule ID {pk} being deleted.")
+        #     except Exception as e:
+        #         logger.error(f"Error revoking Celery task {capsule.delivery_task_id} for capsule ID {pk}: {e}")
+        # else:
+        #     logger.warning(f"No delivery_task_id found for capsule ID {pk}. Cannot revoke Celery task.")
+        # --- End Placeholder ---
+
+        # Perform the deletion
         capsule.delete()
         
         logger.info(f"Capsule '{capsule_title}' (ID: {pk}) deleted by user {request.user.email}.")
+
+        # Create a notification for the owner about the deletion
+        try:
+            Notification.objects.create(
+                user=owner,
+                # capsule=None, # Capsule is deleted, so can't link directly. Or link before delete if needed.
+                message=f"Your time capsule '{capsule_title}' and any scheduled deliveries have been successfully canceled and deleted.",
+                notification_type=NotificationType.SYSTEM_ALERT # Or a more specific type like CAPSULE_DELETED
+            )
+            logger.info(f"Notification created for deletion of capsule '{capsule_title}' for user {owner.email}")
+        except Exception as e:
+            logger.error(f"Failed to create notification for deletion of capsule '{capsule_title}': {e}")
+
         return Response({"message": f"Capsule '{capsule_title}' successfully deleted."}, status=status.HTTP_204_NO_CONTENT)
 
 
