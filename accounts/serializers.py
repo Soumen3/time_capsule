@@ -68,4 +68,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Optionally send a welcome email or perform other actions
         return user
 
-# No changes needed if UserSerializer is sufficient for current user
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'name', 'dob', 'created_at']
+        read_only_fields = ['email', 'created_at', 'id']

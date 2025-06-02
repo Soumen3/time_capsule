@@ -19,6 +19,7 @@ import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'; // Add this import
 import NotificationPage from './pages/NotificationPage'; // Import NotificationPage
+import UserProfilePage from './pages/UserProfilePage'; // Import UserProfilePage
 import LoadingSpinner from './components/LoadingSpinner'; // Import the spinner
 
 
@@ -64,6 +65,7 @@ function App() {
             <Route path="/create-capsule" element={<CapsuleCreatorPage />} />
             <Route path="/capsule/:capsuleId" element={<CapsuleDetailsPage />} />
             <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/profile" element={<UserProfilePage />} /> {/* New Profile Route */}
           </Route>
           
           {/* Publicly accessible routes */}

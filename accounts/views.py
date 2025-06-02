@@ -2,14 +2,13 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSerializer, UserLoginSerializer, UserRegistrationSerializer
+from .serializers import UserSerializer, UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer
 from .models import User
 from .renderer import UserRenderer
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, logout
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from rest_framework.permissions import IsAuthenticated
 
 
 def get_tokens_for_user(user):
@@ -87,3 +86,20 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+        # Pass partial=True to allow partial updates (e.g., only updating 'bio')
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

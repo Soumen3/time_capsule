@@ -112,20 +112,20 @@ const Navbar = () => {
 
 
           {/* Desktop Navigation Section */}
-          <div className="hidden md:flex md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 w-full md:w-auto">
+          <div className="hidden md:flex md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 w-full md:w-auto"> {/* Adjusted space-x for smaller buttons */}
             {user ? (
               // Authenticated User Interface - Desktop
               <>
                 <div className="text-center md:text-left">
                   <div className="text-white/90 font-medium text-sm mb-1">Welcome back!</div>
-                  <div className="text-yellow-200 font-semibold text-lg">{user.name || user.email}</div>
+                  <Link to="/profile" className="text-yellow-200 font-semibold text-lg hover:underline">{user.name || user.email}</Link>
                 </div>
-                <div className="ml-0 md:ml-4">
+                <div className="ml-0 md:ml-2"> {/* Adjusted margin */}
                   <NotificationIcon />
                 </div>
                 <Link to="/dashboard" className="w-full md:w-auto">
                   <Button
-                    className="w-full md:w-auto px-6 py-3 bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
                     variant="secondary"
                   >
                     📊 Dashboard
@@ -133,15 +133,23 @@ const Navbar = () => {
                 </Link>
                 <Link to="/create-capsule" className="w-full md:w-auto">
                   <Button
-                    className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                     variant="primary"
                   >
                     ✨ Create Capsule
                   </Button>
                 </Link>
+                <Link to="/profile" className="w-full md:w-auto">
+                  <Button
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
+                    variant="secondary" 
+                  >
+                    👤 Profile
+                  </Button>
+                </Link>
                 <Button 
                   onClick={handleLogout}
-                  className="w-full md:w-auto px-6 py-3 bg-red-500/80 hover:bg-red-500 text-white font-medium rounded-xl border border-red-400/50 hover:border-red-400 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
+                  className="w-full md:w-auto px-4 py-2 text-sm bg-red-500/80 hover:bg-red-500 text-white font-medium rounded-xl border border-red-400/50 hover:border-red-400 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
                   variant="danger"
                 >
                   🚪 Logout
@@ -155,7 +163,7 @@ const Navbar = () => {
                 </div>
                 <Link to="/login" className="w-full md:w-auto">
                   <Button
-                    className="w-full md:w-auto px-8 py-3 bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 backdrop-blur-sm hover:shadow-lg transform hover:-translate-y-0.5"
                     variant="secondary"
                   >
                     🔑 Login
@@ -163,7 +171,7 @@ const Navbar = () => {
                 </Link>
                 <Link to="/register" className="w-full md:w-auto">
                   <Button
-                    className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    className="w-full md:w-auto px-4 py-2 text-sm bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                     variant="primary"
                   >
                     🌟 Get Started
@@ -177,16 +185,24 @@ const Navbar = () => {
         {/* Mobile Menu Dropdown: Give this a lower z-index than the header bar but still high enough to be over page content */}
         {isMobileMenuOpen && (
           <div className="relative z-10 md:hidden bg-white/10 backdrop-blur-md rounded-b-2xl p-4" id="mobile-menu">
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-2"> {/* Adjusted space-y for smaller buttons */}
               {user ? (
                 <>
                   <div className="text-center mb-2">
                     <div className="text-white/90 font-medium text-sm">Welcome back!</div>
-                    <div className="text-yellow-200 font-semibold text-lg">{user.name || user.email}</div>
+                    <Link to="/profile" className="text-yellow-200 font-semibold text-lg hover:underline" onClick={() => setIsMobileMenuOpen(false)}>{user.name || user.email}</Link>
                   </div>
+                  <Link to="/profile" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      className="w-full px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30"
+                      variant="secondary"
+                    >
+                      👤 Profile
+                    </Button>
+                  </Link>
                   <Link to="/dashboard" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
-                      className="w-full px-6 py-3 bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30"
+                      className="w-full px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30"
                       variant="secondary"
                     >
                       📊 Dashboard
@@ -194,7 +210,7 @@ const Navbar = () => {
                   </Link>
                   <Link to="/create-capsule" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
-                      className="w-full px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white font-semibold rounded-xl shadow-lg"
+                      className="w-full px-4 py-2 text-sm bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-white font-semibold rounded-xl shadow-lg"
                       variant="primary"
                     >
                       ✨ Create Capsule
@@ -202,7 +218,7 @@ const Navbar = () => {
                   </Link>
                   <Button 
                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                    className="w-full px-6 py-3 bg-red-500/80 hover:bg-red-500 text-white font-medium rounded-xl border border-red-400/50"
+                    className="w-full px-4 py-2 text-sm bg-red-500/80 hover:bg-red-500 text-white font-medium rounded-xl border border-red-400/50"
                     variant="danger"
                   >
                     🚪 Logout
@@ -212,7 +228,7 @@ const Navbar = () => {
                 <>
                   <Link to="/login" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
-                      className="w-full px-8 py-3 bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30"
+                      className="w-full px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl border border-white/30"
                       variant="secondary"
                     >
                       🔑 Login
@@ -220,7 +236,7 @@ const Navbar = () => {
                   </Link>
                   <Link to="/register" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
-                      className="w-full px-8 py-3 bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-white font-semibold rounded-xl shadow-lg"
+                      className="w-full px-4 py-2 text-sm bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-white font-semibold rounded-xl shadow-lg"
                       variant="primary"
                     >
                       🌟 Get Started
