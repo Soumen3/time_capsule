@@ -19,9 +19,17 @@ const UserProfilePage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '', // Email might not be editable, or require special handling
-    bio: '',
-    // Add other fields you want to allow editing for
+    bio: '', // Assuming 'dob' was a typo and it's 'bio', or adjust as needed
+    dob: '', // If you have Date of Birth
+    // Password change fields
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
   });
+  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -34,6 +42,10 @@ const UserProfilePage = () => {
           name: response.data.name || '',
           email: response.data.email || '',
           dob: response.data.dob || '', // Ensure 'dob' is the correct key from backend or initialize appropriately
+          bio: response.data.bio || '', // Add bio if it exists
+          currentPassword: '', // Reset password fields on profile load
+          newPassword: '',
+          confirmNewPassword: '',
         });
       } catch (err) {
         console.error('Failed to fetch profile:', err);
@@ -66,11 +78,15 @@ const UserProfilePage = () => {
     e.preventDefault();
     setIsLoading(true); // Use for submission loading
     setError('');
+    setPasswordError(''); // Clear password error on profile update attempt
+    setPasswordSuccess('');
     try {
-      const response = await accountService.updateProfile(formData);
+      // Exclude password fields from profile update
+      const { currentPassword, newPassword, confirmNewPassword, ...profileData } = formData;
+      const response = await accountService.updateProfile(profileData);
       setProfile(response.data); // Update profile with new data from response
       showNotification('Profile updated successfully!', 'success');
-      setIsEditing(false);
+      setIsEditing(false); // Exit editing mode for profile
     } catch (err) {
       console.error('Failed to update profile:', err);
       const errorMessage = err.response?.data?.detail || err.response?.data?.error || 'Failed to update profile.';
@@ -78,6 +94,54 @@ const UserProfilePage = () => {
       showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setIsPasswordSubmitting(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+    setError(''); // Clear general form error
+
+    if (formData.newPassword !== formData.confirmNewPassword) {
+      setPasswordError("New passwords do not match.");
+      setIsPasswordSubmitting(false);
+      showNotification("New passwords do not match.", 'error');
+      return;
+    }
+    if (!formData.newPassword || formData.newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      setIsPasswordSubmitting(false);
+      showNotification("New password must be at least 8 characters long.", 'error');
+      return;
+    }
+
+
+    try {
+      const passwordData = {
+        old_password: formData.currentPassword,
+        new_password: formData.newPassword,
+        new_password2: formData.confirmNewPassword, // Backend might expect new_password2 for confirmation
+      };
+      await accountService.changePassword(passwordData);
+      setPasswordSuccess('Password changed successfully!');
+      showNotification('Password changed successfully!', 'success');
+      // Clear password fields and potentially exit editing mode or stay
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      }));
+      // setIsEditing(false); // Optionally exit editing mode
+    } catch (err) {
+      console.error('Failed to change password:', err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.old_password?.join(', ') || err.response?.data?.new_password?.join(', ') || err.response?.data?.error || 'Failed to change password.';
+      setPasswordError(errorMessage);
+      showNotification(errorMessage, 'error');
+    } finally {
+      setIsPasswordSubmitting(false);
     }
   };
 
@@ -154,7 +218,7 @@ const UserProfilePage = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="mt-1 block w-full"
-                disabled={false} // Typically email is not changed easily or used as an identifier
+                disabled={true} // Typically email is not changed easily or used as an identifier
                 title="Email cannot be changed through this form."
               />
                <p className="text-xs text-gray-500 mt-1">Email cannot be changed here.</p>
@@ -172,14 +236,66 @@ const UserProfilePage = () => {
             </div>
             {/* Add other editable fields here */}
             <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" onClick={() => { setIsEditing(false); setError(''); }} variant="secondary" disabled={isLoading}>
+              <Button type="button" onClick={() => { setIsEditing(false); setError(''); setPasswordError(''); setPasswordSuccess(''); }} variant="secondary" disabled={isLoading || isPasswordSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
+              <Button type="submit" variant="primary" disabled={isLoading || isPasswordSubmitting}>
+                {isLoading ? 'Saving Profile...' : 'Save Profile Changes'}
               </Button>
             </div>
           </form>
+        )}
+
+        {/* Password Change Section - Visible only in editing mode */}
+        {isEditing && (
+          <div className="mt-10 pt-6 border-t border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Change Password</h2>
+            {passwordError && <div className="my-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">{passwordError}</div>}
+            {passwordSuccess && <div className="my-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded">{passwordSuccess}</div>}
+            <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
+                <Input
+                  type="password"
+                  name="currentPassword"
+                  id="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
+                <Input
+                  type="password"
+                  name="newPassword"
+                  id="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                <Input
+                  type="password"
+                  name="confirmNewPassword"
+                  id="confirmNewPassword"
+                  value={formData.confirmNewPassword}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full"
+                  required
+                />
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button type="submit" variant="primary" disabled={isPasswordSubmitting || isLoading}>
+                  {isPasswordSubmitting ? 'Changing...' : 'Change Password'}
+                </Button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
     </div>

@@ -2,13 +2,16 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSerializer, UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer
+from .serializers import UserSerializer, UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer
 from .models import User
 from .renderer import UserRenderer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_tokens_for_user(user):
@@ -89,6 +92,7 @@ class CurrentUserView(APIView):
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
 
     def get(self, request):
         user = request.user
@@ -102,4 +106,19 @@ class UserProfileView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = serializer.save()
+            # Update the session auth hash to prevent the user from being logged out
+            update_session_auth_hash(request, user)
+            logger.info(f"User {request.user.email} successfully changed their password.")
+            return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+        logger.warning(f"User {request.user.email} failed to change password. Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

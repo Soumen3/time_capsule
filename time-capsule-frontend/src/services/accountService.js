@@ -7,14 +7,19 @@ const getProfile = () => {
 };
 
 const updateProfile = (profileData) => {
-  return api.put(`${API_URL}profile/update/`, profileData); // Assuming endpoint is /api/accounts/profile/update/
+  return api.put(`${API_URL}profile/`, profileData); // Assuming endpoint is /api/accounts/profile/
 };
 
-// Add other account-related functions here, e.g., change password
+const changePassword = (passwordData) => {
+  // Ensure your backend expects 'old_password', 'new_password', 'new_password2'
+  // The endpoint might be 'profile/change-password/' or similar
+  return api.post(`${API_URL}profile/change-password/`, passwordData); 
+};
 
 const accountService = {
   getProfile,
   updateProfile,
+  changePassword,
 };
 
 export default accountService;
