@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
 
 class UserManager(BaseUserManager):
     def create_user(self, email, name, dob=None, password=None, password2=None, **extra_fields):
@@ -19,13 +20,12 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_admin', True)
+        extra_fields.setdefault('is_active', True)
+
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-        if extra_fields.get('is_admin') is not True:
-            raise ValueError('Superuser must have is_admin=True.')
         
         # Pass a default name for superuser
         user = self.create_user(email, name=extra_fields.get('name', ''), password=password, **extra_fields)
@@ -44,16 +44,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=255
         )
     name = models.CharField(max_length=255, blank=True, null=True)
+    bio = models.TextField(blank=True, null=True) 
     dob= models.DateField(null=True, blank=True)
-    is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # ...add other fields as needed...
+
+    # Fields for OTP based password reset
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    # REQUIRED_FIELDS = ['name'] 
 
     objects = UserManager()
 
@@ -61,10 +64,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
     
     def has_perm(self, perm, obj=None):
-        return self.is_admin
+        # "Does the user have a specific permission?"
+        # Simplest possible answer: Yes, if the user is active and is_staff.
+        # For more granular permissions, Django's permission framework (via PermissionsMixin)
+        # will handle checks if this returns False or if superuser.
+        return self.is_active and self.is_staff
+
     def has_module_perms(self, app_label):
-        return True
-    
+        # "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, if the user is active and is_staff.
+        return self.is_active and self.is_staff
+
 
 
 

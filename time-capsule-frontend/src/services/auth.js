@@ -1,6 +1,8 @@
 // src/services/auth.js
 import api from './api';
 
+const API_URL = '/accounts/'; // Your accounts API base URL
+
 const authService = {
   /**
    * Logs in a user by sending credentials to the backend.
@@ -121,7 +123,62 @@ const authService = {
       }
     }
     return null;
-  }
+  },
+
+  /**
+   * Requests an OTP for password reset.
+   * @param {string} email - The email address to send the OTP to.
+   * @returns {Promise<Object>} - The response data from the backend.
+   * @throws {Object} - Error response data if the request fails.
+   */
+  requestPasswordResetOTP: async (email) => {
+    try {
+      const response = await api.post('accounts/password-reset/request-otp/', { email });
+      return response.data;
+    } catch (error) {
+      console.error('Request OTP error:', error.response?.data || error.message);
+      throw error.response?.data || { detail: 'An unexpected error occurred while requesting OTP.' };
+    }
+  },
+
+  /**
+   * Verifies the OTP sent to the user's email for password reset.
+   * @param {string} email - The email address of the user.
+   * @param {string} otp - The OTP received by the user.
+   * @returns {Promise<Object>} - The response data from the backend.
+   * @throws {Object} - Error response data if the verification fails.
+   */
+  verifyPasswordResetOTP: async (email, otp) => {
+    try {
+      const response = await api.post('accounts/password-reset/verify-otp/', { email, otp });
+      return response.data;
+    } catch (error) {
+      console.error('Verify OTP error:', error.response?.data || error.message);
+      throw error.response?.data || { detail: 'An unexpected error occurred while verifying OTP.' };
+    }
+  },
+
+  /**
+   * Sets a new password for the user after verifying the OTP.
+   * @param {string} email - The email address of the user.
+   * @param {string} password - The new password.
+   * @param {string} password2 - Confirmation of the new password.
+   * @returns {Promise<Object>} - The response data from the backend.
+   * @throws {Object} - Error response data if setting the new password fails.
+   */
+  setNewPasswordAfterOTP: async (email, password, password2) => {
+    try {
+      const response = await api.post('accounts/password-reset/set-new-password/', {
+        email,
+        password,
+        password2,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Set new password error:', error.response?.data || error.message);
+      throw error.response?.data || { detail: 'An unexpected error occurred while setting the new password.' };
+    }
+  },
 };
 
 export default authService; // Export the consolidated authentication service object

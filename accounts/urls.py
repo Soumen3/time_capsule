@@ -5,7 +5,10 @@ from .views import (
     UserRegistrationView, 
     CurrentUserView, 
     UserProfileView,
-    ChangePasswordView # Import the new view
+    ChangePasswordView,
+    PasswordResetRequestView,    
+    OTPVerifyView,                 
+    PasswordResetSetNewView        
 )
 
 app_name = 'accounts'
@@ -17,4 +20,9 @@ urlpatterns = [
     path('me/', CurrentUserView.as_view(), name='current_user'),
     path('profile/', UserProfileView.as_view(), name='user-profile'), 
     path('profile/change-password/', ChangePasswordView.as_view(), name='account_change_password'),
+    
+    # OTP Based Password Reset URLs
+    path('password-reset/request-otp/', PasswordResetRequestView.as_view(), name='password_reset_request_otp'),
+    path('password-reset/verify-otp/', OTPVerifyView.as_view(), name='password_reset_verify_otp'),
+    path('password-reset/set-new-password/', PasswordResetSetNewView.as_view(), name='password_reset_set_new'),
 ]

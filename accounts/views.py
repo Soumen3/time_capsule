@@ -2,13 +2,22 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSerializer, UserLoginSerializer, UserRegistrationSerializer, UserProfileSerializer, ChangePasswordSerializer
+from .serializers import( 
+    UserSerializer, 
+    UserLoginSerializer, 
+    UserRegistrationSerializer, 
+    UserProfileSerializer, 
+    ChangePasswordSerializer,
+    PasswordResetRequestSerializer, 
+    OTPVerifySerializer,            
+    PasswordResetSetNewSerializer   
+                         )
 from .models import User
-from .renderer import UserRenderer
+from .renderer import UserRenderer # Assuming you have this custom renderer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError # Assuming you use SimpleJWT
 import logging
 
 logger = logging.getLogger(__name__)
@@ -121,4 +130,50 @@ class ChangePasswordView(APIView):
             logger.info(f"User {request.user.email} successfully changed their password.")
             return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
         logger.warning(f"User {request.user.email} failed to change password. Errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [UserRenderer]
+
+
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.save() 
+            logger.info(f"Password reset OTP sent to {data.get('email')}.")
+            return Response(
+                {"detail": "An OTP has been sent to your email address.", "email": data.get('email')},
+                status=status.HTTP_200_OK
+            )
+        logger.warning(f"Password reset request failed for {request.data.get('email')}. Errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OTPVerifyView(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [UserRenderer]
+
+    def post(self, request, *args, **kwargs):
+        serializer = OTPVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            logger.info(f"OTP verified successfully for email: {request.data.get('email')}")
+            return Response({"detail": "OTP verified successfully. You can now set a new password.", "email": request.data.get('email')}, status=status.HTTP_200_OK)
+        logger.warning(f"OTP verification failed for email: {request.data.get('email')}. Errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetSetNewView(APIView):
+    permission_classes = [AllowAny] 
+    renderer_classes = [UserRenderer]
+
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetSetNewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"Password successfully reset for email: {request.data.get('email')}")
+            return Response({"detail": "Password has been reset successfully. You can now log in."}, status=status.HTTP_200_OK)
+        logger.warning(f"Setting new password failed for email: {request.data.get('email')}. Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

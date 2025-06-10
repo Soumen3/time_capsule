@@ -11,10 +11,10 @@ class UserAdmin(admin.ModelAdmin):
     # ordering = ('-created_at',)
     fieldsets = (
         (None, {
-            'fields': ('email', 'name', 'dob', 'password')
+            'fields': ('email', 'name', 'dob', 'password', 'otp', 'otp_created_at')
         }),
         ('Permissions', {
-            'fields': ('is_active', 'is_staff', 'is_admin')
+            'fields': ('is_active', 'is_staff')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at',)
@@ -26,4 +26,4 @@ class UserAdmin(admin.ModelAdmin):
             'fields': ('email', 'name', 'dob', 'password1', 'password2')
         }),
     )
-    readonly_fields = ('created_at', 'updated_at', 'password')
+    readonly_fields = ('created_at', 'updated_at', 'password',)

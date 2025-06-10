@@ -17,7 +17,6 @@ import PublicCapsuleViewPage from './pages/PublicCapsuleViewPage'; // Import the
 import NotFoundPage from './pages/NotFoundPage'; 
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/Auth/ResetPasswordPage'; // Add this import
 import NotificationPage from './pages/NotificationPage'; // Import NotificationPage
 import UserProfilePage from './pages/UserProfilePage'; // Import UserProfilePage
 import LoadingSpinner from './components/LoadingSpinner'; // Import the spinner
@@ -57,7 +56,6 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
           
           {/* Protected routes now wrapped by ProtectedLayout */}
           <Route element={<ProtectedLayout />}>

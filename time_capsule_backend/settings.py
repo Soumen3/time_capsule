@@ -260,3 +260,6 @@ STORAGES = {
 # Ensure MEDIA_URL is set to the S3 bucket URL
 MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
 MEDIA_ROOT = BASE_DIR / "media"
+
+
+OTPOTP_VALIDITY_DURATION_SECONDS = 600
