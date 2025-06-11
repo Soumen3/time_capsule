@@ -18,8 +18,12 @@ from .renderer import UserRenderer # Assuming you have this custom renderer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError # Assuming you use SimpleJWT
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 import logging
+from django.conf import settings # Import settings
+from google.oauth2 import id_token as google_id_token # For Google ID token verification
+from google.auth.transport import requests as google_requests # For Google ID token verification
+import requests # General requests, if needed for other things
 
 logger = logging.getLogger(__name__)
 
@@ -202,3 +206,96 @@ class PasswordResetSetNewView(APIView):
             return Response({"detail": "Password has been reset successfully. You can now log in."}, status=status.HTTP_200_OK)
         logger.warning(f"Setting new password failed for email: {request.data.get('email')}. Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [UserRenderer]
+
+    def post(self, request, *args, **kwargs):
+        id_token = request.data.get('id_token')
+        if not id_token:
+            return Response({'error': 'ID token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Verify the ID token
+            # The audience should be your Google Client ID
+            # You might need to store this client ID in Django settings or an environment variable accessible by the backend.
+            # For now, we'll assume it's passed or known.
+            # It's crucial that this GOOGLE_CLIENT_ID is the same one used by your frontend.
+            # You can get it from settings:
+            # google_client_id_backend = settings.GOOGLE_CLIENT_ID 
+            # For this example, let's assume it's hardcoded or you'll add it to settings
+            # A common practice is to have this in an env var and load via settings.
+            
+            # IMPORTANT: You MUST configure settings.GOOGLE_CLIENT_ID
+            # For example, in your settings.py:
+            # GOOGLE_CLIENT_ID = os.environ.get('VITE_GOOGLE_CLIENT_ID') # If backend can access frontend env vars
+            # Or better, define a separate backend env var for it.
+            
+            # For now, let's try to get it from settings, expecting it to be set up.
+            # If not set in settings, this will raise an AttributeError.
+            # You should ensure settings.GOOGLE_CLIENT_ID is configured.
+            # A placeholder for demonstration:
+            # google_client_id_from_settings = getattr(settings, 'GOOGLE_CLIENT_ID', None)
+            # if not google_client_id_from_settings:
+            #     logger.error("GOOGLE_CLIENT_ID not configured in Django settings.")
+            #     return Response({'error': 'Server configuration error for Google Sign-In.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Using a requests.Request() object for the transport
+            google_request = google_requests.Request()
+            id_info = google_id_token.verify_oauth2_token(
+                id_token, google_request #, audience=google_client_id_from_settings # Uncomment and use your client ID
+            )
+            
+            # The 'aud' claim in id_info should match one of your client IDs.
+            # It's good practice to explicitly check this if verify_oauth2_token doesn't do it strictly enough for your needs,
+            # or if you have multiple client IDs.
+            # For example:
+            # if id_info['aud'] not in [settings.GOOGLE_CLIENT_ID_WEB, settings.GOOGLE_CLIENT_ID_ANDROID]:
+            #     raise ValueError('Invalid audience.')
+
+
+            userid = id_info['sub'] # Google's unique ID for the user
+            email = id_info.get('email')
+            name = id_info.get('name', '')
+            # picture = id_info.get('picture') # You can store this if you want
+
+            if not email:
+                return Response({'error': 'Email not provided by Google.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={'name': name, 'is_active': True} # New users via SSO are active
+            )
+
+            if created:
+                user.set_unusable_password() # SSO users don't need a local password
+                # You might want to set a flag like user.sso_provider = 'google'
+                user.save()
+                logger.info(f"New user created via Google SSO: {email}")
+            else:
+                # If user exists, ensure they are active (e.g., if they registered but didn't verify, then used SSO)
+                if not user.is_active:
+                    user.is_active = True
+                    user.save(update_fields=['is_active'])
+                logger.info(f"User logged in via Google SSO: {email}")
+
+            # Generate DRF token (or JWT)
+            drf_token, _ = Token.objects.get_or_create(user=user)
+            jwt_tokens = get_tokens_for_user(user) # Assuming you have this function for JWTs
+
+            return Response({
+                'token': drf_token.key,
+                'tokens': jwt_tokens,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            # Invalid token
+            logger.error(f"Google ID token verification failed: {e}")
+            return Response({'error': f'Invalid Google token: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during Google login: {e}", exc_info=True)
+            return Response({'error': 'An unexpected error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

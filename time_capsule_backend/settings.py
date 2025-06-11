@@ -173,6 +173,10 @@ EMAIL_USE_TLS = True
 # Frontend URL (used for constructing links in emails)
 FRONTEND_BASE_URL = 'http://localhost:5173' # Or your frontend's actual URL
 
+# Add your Google Client ID here, ideally from an environment variable
+# This is the same Client ID used by your frontend.
+GOOGLE_CLIENT_ID = config('VITE_GOOGLE_CLIENT_ID', default=None) # Or a separate backend env var like GOOGLE_OAUTH_CLIENT_ID
+
 # Celery Configuration Options
 # Make sure your Redis server is running
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as the broker

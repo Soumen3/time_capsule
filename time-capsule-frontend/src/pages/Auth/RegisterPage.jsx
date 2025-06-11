@@ -4,9 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import Input from '../../components/Input'; // Adjust path if needed
 import Button from '../../components/Button'; // Adjust path if needed
 import authService from '../../services/auth'; // Import the authService
-import AuthLayout from '../../components/Layout/AuthLayout'; // Changed from MainLayout to AuthLayout
-import { useNotification } from '../../hooks/useNotification'; // Assuming you have this
-import Navbar from '../../components/Layout/Navbar';
+import AuthLayout from '../../components/Layout/AuthLayout';
+import { useNotification } from '../../hooks/useNotification';
+import { GoogleLogin } from '@react-oauth/google'; // Import the component
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -83,6 +83,30 @@ const RegisterPage = () => {
     }
   };
 
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    try {
+      await authService.loginWithGoogle(credentialResponse.credential);
+      showNotification('Google sign-up successful!', 'success');
+      navigate('/dashboard');
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.response?.data?.error || 'Google sign-up failed. Please try again.';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLoginError = () => {
+    console.error('Google login error');
+    const errorMessage = 'Google sign-up failed. Please try again.';
+    setError(errorMessage);
+    showNotification(errorMessage, 'error');
+    setLoading(false);
+  };
+
   return (
     <AuthLayout> {/* Using AuthLayout */}
       <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
@@ -144,7 +168,55 @@ const RegisterPage = () => {
             {loading ? 'Registering...' : 'Register'}
           </Button>
         </form>
-        <p className="text-center text-gray-600 text-sm mt-6">
+
+        {/* SSO Options Separator */}
+        <div className="my-6 flex items-center">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="flex-shrink mx-4 text-gray-500 text-sm">Or sign up with</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        {/* SSO Options */}
+        <div className="flex flex-col items-center space-y-3">
+            {/* GoogleLogin component will render Google's button */}
+            {loading && <p className="text-sm text-gray-500">Processing Google Sign-Up...</p>}
+            {!loading && (
+              <GoogleLogin
+                onSuccess={handleGoogleLoginSuccess}
+                onError={handleGoogleLoginError}
+                useOneTap
+                useFedCM={false} // Explicitly disable FedCM
+                shape="rectangular"
+                theme="outline"
+                size="large"
+                width="318px" // Adjust width as needed
+              />
+            )}
+            
+            {/* Facebook SSO Icon Button (Placeholder) */}
+            <button
+              type="button"
+              onClick={() => alert('Facebook SSO not yet implemented')}
+              disabled={loading}
+              className="p-2 border border-gray-300 rounded-full hover:bg-gray-100 transition duration-150 flex items-center justify-center"
+              title="Sign up with Facebook"
+            >
+              <img src="/facebook.png" alt="Facebook" className="w-6 h-6" />
+            </button>
+
+            {/* Apple SSO Icon Button (Placeholder) */}
+            <button
+              type="button"
+              onClick={() => alert('Apple SSO not yet implemented')}
+              disabled={loading}
+              className="p-2 border border-gray-300 rounded-full hover:bg-gray-100 transition duration-150 flex items-center justify-center"
+              title="Sign up with Apple"
+            >
+              <img src="/apple.png" alt="Apple" className="w-6 h-6" />
+            </button>
+        </div>
+
+        <p className="text-center text-gray-600 text-sm mt-8">
           Already have an account?{' '}
           <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
             Login here

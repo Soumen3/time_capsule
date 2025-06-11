@@ -109,8 +109,8 @@ The Time Capsule Team
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'bio', 'dob', 'created_at', 'last_login', 'date_joined']
-        read_only_fields = ['email', 'created_at', 'id', 'last_login', 'date_joined']
+        fields = ['id', 'email', 'name', 'bio', 'dob', 'created_at', 'last_login', 'created_at']
+        read_only_fields = ['email', 'created_at', 'id', 'last_login', 'created_at']
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)

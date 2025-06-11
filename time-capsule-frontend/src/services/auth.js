@@ -197,6 +197,26 @@ const authService = {
       throw error.response?.data || { detail: 'An unexpected error occurred while setting the new password.' };
     }
   },
+
+  /**
+   * Logs in a user using Google authentication.
+   * @param {string} idToken - The ID token received from Google Sign-In.
+   * @returns {Promise<Object>} - The response data from the backend (should contain 'key').
+   * @throws {Object} - Error response data if login fails.
+   */
+  loginWithGoogle: async (idToken) => {
+    try {
+      const response = await api.post(API_URL + 'google-login/', { id_token: idToken });
+      if (response.data.token) { // Assuming DRF token from backend
+        localStorage.setItem('authToken', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Google login error:', error.response?.data || error.message);
+      throw error.response?.data || { detail: 'An unexpected error occurred during Google login.' };
+    }
+  },
 };
 
 export default authService; // Export the consolidated authentication service object
