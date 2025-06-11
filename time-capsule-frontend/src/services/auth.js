@@ -34,6 +34,7 @@ const authService = {
    */
   register: async (userData) => {
     try {
+      // Backend will now create an inactive user and send OTP
       const response = await api.post('accounts/register/', userData);
       console.log(response)
       return response.data;
@@ -41,6 +42,23 @@ const authService = {
     } catch (error) {
       console.error('Registration error:', error.response?.data || error.message);
       throw error.response?.data || { detail: 'An unexpected error occurred.' };
+    }
+  },
+
+  /**
+   * Verifies the account using the OTP sent to the user's email during registration.
+   * @param {string} email - The email address of the user.
+   * @param {string} otp - The OTP received by the user.
+   * @returns {Promise<Object>} - The response data from the backend.
+   * @throws {Object} - Error response data if verification fails.
+   */
+  verifyAccountOTP: async (email, otp) => {
+    try {
+      const response = await api.post('accounts/verify-account/', { email, otp });
+      return response.data;
+    } catch (error) {
+      console.error('Verify account OTP error:', error.response?.data || error.message);
+      throw error.response?.data || { detail: 'An unexpected error occurred during account verification.' };
     }
   },
 

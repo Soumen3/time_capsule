@@ -2,15 +2,15 @@ from rest_framework import serializers
 from .models import User
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-# from django.contrib.auth.tokens import PasswordResetTokenGenerator # Not used for OTP flow
-from .utils import Util
+# from django.contrib.auth.tokens import PasswordResetTokenGenerator # Not used for OTP
+from .utils import Util # Ensure this is correctly imported
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.utils import timezone
-import random
-import string
-from django.conf import settings
+from django.utils import timezone # Added
+import random # Added
+import string # Added
+from django.conf import settings # Added
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data.pop('password2', None)
+        # User is created as inactive by default due to model change
         return User.objects.create_user(**validated_data)
     
 
@@ -58,7 +59,7 @@ class UserLogoutSerializer(serializers.Serializer):
         return value
     
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    password = serializers.CharField(style={'input_type': 'password'}, write_only=True, validators=[validate_password])
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
 
     class Meta:
@@ -67,13 +68,42 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError("Passwords do not match.")
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
         return attrs
     
     def create(self, validated_data):
         validated_data.pop('password2', None)
-        user = User.objects.create_user(**validated_data)
-        # Optionally send a welcome email or perform other actions
+        # User.is_active is False by default from model definition
+        user = User.objects.create_user(**validated_data) 
+        
+        # Generate OTP
+        otp = ''.join(random.choices(string.digits, k=6))
+        user.otp = otp
+        user.otp_created_at = timezone.now()
+        user.save(update_fields=['otp', 'otp_created_at'])
+
+        # Send OTP email
+        email_body = f"""
+Hi {user.name or user.email},
+
+Thank you for registering with Time Capsule!
+Your One-Time Password (OTP) to verify your email address is:
+
+{otp}
+
+This OTP is valid for 10 minutes. Please enter it on the verification page.
+
+If you did not request this, please ignore this email.
+
+Thanks,
+The Time Capsule Team
+"""
+        email_data = {
+            'email_subject': 'Verify Your Email - Time Capsule',
+            'email_body': email_body,
+            'to_email': user.email
+        }
+        Util.send_email(email_data)
         return user
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -221,4 +251,44 @@ class PasswordResetSetNewSerializer(serializers.Serializer):
         user.otp = None # Ensure OTP fields are fully cleared
         user.otp_created_at = None
         user.save()
+        return user
+
+class VerifyAccountSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6, min_length=6)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        otp_entered = attrs.get('otp')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email or OTP.")
+
+        if user.is_active:
+            raise serializers.ValidationError("Account already verified.")
+
+        if user.otp != otp_entered:
+            raise serializers.ValidationError("Invalid OTP.")
+        
+        otp_validity_duration = getattr(settings, 'OTP_VALIDITY_DURATION_SECONDS', 600) # Default 10 mins
+        if user.otp_created_at and (timezone.now() - user.otp_created_at).total_seconds() > otp_validity_duration:
+            # Optionally, clear the expired OTP from the user model here
+            user.otp = None
+            user.otp_created_at = None
+            user.save(update_fields=['otp', 'otp_created_at'])
+            raise serializers.ValidationError("OTP has expired. Please register again to get a new OTP.")
+        elif not user.otp_created_at: # Should not happen if OTP was set during registration
+             raise serializers.ValidationError("OTP not found. Please register again.")
+
+        attrs['user'] = user
+        return attrs
+
+    def save(self):
+        user = self.validated_data['user']
+        user.is_active = True
+        user.otp = None # Clear OTP after successful verification
+        user.otp_created_at = None # Clear OTP creation time
+        user.save(update_fields=['is_active', 'otp', 'otp_created_at'])
         return user

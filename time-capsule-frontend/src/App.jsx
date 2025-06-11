@@ -17,6 +17,7 @@ import PublicCapsuleViewPage from './pages/PublicCapsuleViewPage'; // Import the
 import NotFoundPage from './pages/NotFoundPage'; 
 import LandingPage from './pages/LandingPage';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
+import VerifyEmailPage from './pages/Auth/VerifyEmailPage'; // Added
 import NotificationPage from './pages/NotificationPage'; // Import NotificationPage
 import UserProfilePage from './pages/UserProfilePage'; // Import UserProfilePage
 import LoadingSpinner from './components/LoadingSpinner'; // Import the spinner
@@ -47,13 +48,9 @@ function App() {
     <Router>
       <NotificationProvider>
         <Routes>
-          <Route
-            path="/login"
-            element={
-              <LoginPageWrapper />
-            }
-          />
+          <Route path="/login" element={<LoginPageWrapper />}/>
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} /> {/* Added route */}
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           

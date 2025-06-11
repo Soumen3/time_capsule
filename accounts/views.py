@@ -10,7 +10,8 @@ from .serializers import(
     ChangePasswordSerializer,
     PasswordResetRequestSerializer, 
     OTPVerifySerializer,            
-    PasswordResetSetNewSerializer   
+    PasswordResetSetNewSerializer,
+    VerifyAccountSerializer   # Added
                          )
 from .models import User
 from .renderer import UserRenderer # Assuming you have this custom renderer
@@ -43,9 +44,10 @@ class UserLoginView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, email=email, password=password) # authenticate checks is_active by default
         if user:
-            # Get or create the DRF token and return only the key (string), not the Token object
+            if not user.is_active: # Explicit check, though authenticate should handle it
+                return Response({'error': 'Account not verified. Please check your email for OTP.'}, status=status.HTTP_403_FORBIDDEN)
             token, _ = Token.objects.get_or_create(user=user)
             tokens = get_tokens_for_user(user)
             return Response({
@@ -54,6 +56,13 @@ class UserLoginView(APIView):
                 'user': UserSerializer(user).data
             }, status=status.HTTP_200_OK)
         else:
+            # Check if user exists but is inactive
+            try:
+                user_exists = User.objects.get(email=email)
+                if not user_exists.is_active:
+                    return Response({'error': 'Account not verified. Please check your email for OTP.', 'email': email, 'needsVerification': True}, status=status.HTTP_403_FORBIDDEN)
+            except User.DoesNotExist:
+                pass # Fall through to invalid credentials
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class UserLogoutView(APIView):
@@ -83,13 +92,29 @@ class UserRegistrationView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        tokens = get_tokens_for_user(user)
+        user = serializer.save() # User is created inactive, OTP is sent
+        logger.info(f"User {user.email} registered. OTP sent for verification.")
         return Response({
-            'message': 'User registered successfully.',
-            'user': UserSerializer(user).data,
-            'tokens': tokens,
+            'message': 'Registration successful. Please check your email for an OTP to verify your account.',
+            'email': user.email, # Send email back to frontend for OTP page
+            # 'user': UserSerializer(user).data, # Don't send full user data or tokens yet
         }, status=status.HTTP_201_CREATED)
+
+class VerifyAccountView(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [UserRenderer]
+
+    def post(self, request, *args, **kwargs):
+        serializer = VerifyAccountSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save() # Activates the user
+            logger.info(f"Account verified successfully for user {user.email}.")
+            # Optionally, log the user in and return tokens, or just confirm verification
+            # For now, just confirm. User can login separately.
+            return Response({"detail": "Account verified successfully. You can now log in."}, status=status.HTTP_200_OK)
+        logger.warning(f"Account verification failed. Errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
