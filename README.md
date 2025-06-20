@@ -62,8 +62,8 @@ A modern web application for creating, sealing, and delivering digital time caps
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/time-capsule-project.git
-cd time-capsule-project
+git clone https://github.com/Soumen3/time_capsule.git
+cd time_capsule
 ```
 
 ### 2. Backend Setup
@@ -93,7 +93,6 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id
 #### b. Install Dependencies
 
 ```bash
-cd time_capsule_backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -220,5 +219,5 @@ MIT License
 
 ## Contact
 
-For questions or support, open an issue or contact the maintainer at [your.email@example.com](mailto:your.email@example.com).
+For questions or support, open an issue or contact the maintainer at [soumensamanta112233@gmail.com](mailto:soumensamanta112233@gmail.com).
 
