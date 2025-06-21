@@ -20,6 +20,7 @@ const CapsuleCreatorPage = () => {
   const [error, setError] = useState(''); // API error message
   const [successMessage, setSuccessMessage] = useState(''); // API success message
   const [step, setStep] = useState(1);
+  const [stepError, setStepError] = useState(''); // Step-specific error
 
   // State for all form fields
   const [title, setTitle] = useState('');
@@ -85,6 +86,39 @@ const CapsuleCreatorPage = () => {
     }
   };
 
+  const handleNextStep = (currentStep) => {
+    setStepError('');
+    if (currentStep === 1) {
+      if (!title.trim()) {
+        setStepError('Capsule title is required.');
+        return;
+      }
+    }
+    if (currentStep === 3) {
+      if (!recipientEmail.trim()) {
+        setStepError('Recipient email is required.');
+        return;
+      }
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recipientEmail.trim())) {
+        setStepError('Please enter a valid email address.');
+        return;
+      }
+    }
+    if (currentStep === 4) {
+      if (!deliveryDate) {
+        setStepError('Delivery date is required.');
+        return;
+      }
+      if (!deliveryTime) {
+        setStepError('Delivery time is required.');
+        return;
+      }
+    }
+    setStep(currentStep + 1);
+  };
+
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -99,6 +133,7 @@ const CapsuleCreatorPage = () => {
                 className="mb-4"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
+                required={true}
               />
               <Textarea
                 placeholder="Capsule Description"
@@ -108,8 +143,9 @@ const CapsuleCreatorPage = () => {
                 onChange={e => setDescription(e.target.value)}
               />
             </div>
+            {stepError && <div className="my-2 p-2 bg-red-100 text-red-700 border border-red-300 rounded">{stepError}</div>}
             <div className="flex justify-end mt-6">
-              <Button onClick={() => setStep(2)}>Next</Button>
+              <Button onClick={() => handleNextStep(1)}>Next</Button>
             </div>
           </div>
         );
@@ -136,7 +172,7 @@ const CapsuleCreatorPage = () => {
             </div>
             <div className="flex justify-between mt-6">
               <Button onClick={() => setStep(1)} variant="secondary">Back</Button>
-              <Button onClick={() => setStep(3)}>Next</Button>
+              <Button onClick={() => handleNextStep(2)}>Next</Button>
             </div>
           </div>
         );
@@ -152,11 +188,13 @@ const CapsuleCreatorPage = () => {
                 className="mb-4"
                 value={recipientEmail}
                 onChange={e => setRecipientEmail(e.target.value)}
+                required={true}
               />
             </div>
+            {stepError && <div className="my-2 p-2 bg-red-100 text-red-700 border border-red-300 rounded">{stepError}</div>}
             <div className="flex justify-between mt-6">
               <Button onClick={() => setStep(2)} variant="secondary">Back</Button>
-              <Button onClick={() => setStep(4)}>Next</Button>
+              <Button onClick={() => handleNextStep(3)}>Next</Button>
             </div>
           </div>
         );
@@ -175,6 +213,8 @@ const CapsuleCreatorPage = () => {
                     value={deliveryDate}
                     onChange={e => setDeliveryDate(e.target.value)}
                     className="w-full"
+                    required={true}
+                    min={new Date().toISOString().split('T')[0]} // Prevent past dates
                   />
                 </div>
                 <div className="mb-4">
@@ -185,6 +225,7 @@ const CapsuleCreatorPage = () => {
                     value={deliveryTime}
                     onChange={e => setDeliveryTime(e.target.value)}
                     className="w-full"
+                    required={true}
                   />
                 </div>
                 <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
@@ -194,9 +235,10 @@ const CapsuleCreatorPage = () => {
                 </div>
               </div>
             </div>
+            {stepError && <div className="my-2 p-2 bg-red-100 text-red-700 border border-red-300 rounded">{stepError}</div>}
             <div className="flex justify-between mt-6">
               <Button onClick={() => setStep(3)} variant="secondary">Back</Button>
-              <Button onClick={() => setStep(5)}>Next</Button>
+              <Button onClick={() => handleNextStep(4)}>Next</Button>
             </div>
           </div>
         );
