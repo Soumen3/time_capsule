@@ -71,13 +71,11 @@ const getCapsules = async () => {
 const getCapsuleById = async (capsuleId) => {
   try {
     const response = await api.get(`/capsules/${capsuleId}/`); // Assumes endpoint like /api/capsules/{id}/
-    console.log(response.data); // Log the response data for debugging
     return response.data;
 
   } catch (error) {
-    console.error(`Failed to fetch capsule ${capsuleId}:`, error.response || error.message);
     const errorDetails = error.response?.data;
-    const errorMessage = errorDetails?.detail || errorDetails?.message || error.message || `Failed to fetch capsule ${capsuleId}`;
+    const errorMessage = errorDetails?.detail || errorDetails?.message || errorDetails?.error || error.message || `Failed to fetch capsule ${capsuleId}`;
     throw new Error(errorMessage);
   }
 };

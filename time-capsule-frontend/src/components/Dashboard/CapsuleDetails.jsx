@@ -59,7 +59,6 @@ const CapsuleDetailsPage = () => {
         setCapsule(data);
       } catch (err) {
         setError(err.message || 'Failed to load capsule details.');
-        console.error("Failed to fetch capsule details:", err);
       } finally {
         setLoading(false);
       }
