@@ -5,6 +5,7 @@ import Input from '../../components/Input'; // Adjust path if needed
 import Button from '../../components/Button'; // Adjust path if needed
 import authService from '../../services/auth'; // Import the authService
 import AuthLayout from '../../components/Layout/AuthLayout';
+import MainLayout from '../../components/Layout/MainLayout';
 import { useNotification } from '../../hooks/useNotification';
 import { GoogleLogin } from '@react-oauth/google'; // Import the component
 
@@ -108,8 +109,8 @@ const RegisterPage = () => {
   };
 
   return (
-    <AuthLayout> {/* Using AuthLayout */}
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+    <MainLayout> {/* Using AuthLayout */}
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md justify-self-center">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Create Your Time Capsule Account</h2>
         <form onSubmit={handleSubmit}>
           {error && (
@@ -190,11 +191,12 @@ const RegisterPage = () => {
                 theme="outline"
                 size="large"
                 width="318px" // Adjust width as needed
+                text='Sign up with Google'
               />
             )}
             
             {/* Facebook SSO Icon Button (Placeholder) */}
-            <button
+            {/* <button
               type="button"
               onClick={() => alert('Facebook SSO not yet implemented')}
               disabled={loading}
@@ -202,10 +204,10 @@ const RegisterPage = () => {
               title="Sign up with Facebook"
             >
               <img src="/facebook.png" alt="Facebook" className="w-6 h-6" />
-            </button>
+            </button> */}
 
             {/* Apple SSO Icon Button (Placeholder) */}
-            <button
+            {/* <button
               type="button"
               onClick={() => alert('Apple SSO not yet implemented')}
               disabled={loading}
@@ -213,7 +215,7 @@ const RegisterPage = () => {
               title="Sign up with Apple"
             >
               <img src="/apple.png" alt="Apple" className="w-6 h-6" />
-            </button>
+            </button> */}
         </div>
 
         <p className="text-center text-gray-600 text-sm mt-8">
@@ -223,7 +225,7 @@ const RegisterPage = () => {
           </Link>
         </p>
       </div>
-    </AuthLayout>
+    </MainLayout>
   );
 };
 

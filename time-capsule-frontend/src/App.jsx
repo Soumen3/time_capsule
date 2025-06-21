@@ -49,7 +49,7 @@ function App() {
       <NotificationProvider>
         <Routes>
           <Route path="/login" element={<LoginPageWrapper />}/>
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<RegisterPageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} /> {/* Added route */}
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -104,6 +104,37 @@ function LoginPageWrapper() {
   }
 
   return <LoginPage />;
+}
+
+function RegisterPageWrapper() {
+  const navigate = useNavigate();
+  const [checking, setChecking] = React.useState(true);
+  const { showNotification } = useNotification();
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser && isMounted) {
+        showNotification('You are already registered and logged in.', 'info', 2000);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      }
+      if (isMounted) setChecking(false);
+    })();
+    return () => { isMounted = false; };
+  }, [navigate, showNotification]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="h-16 w-16" />
+      </div>
+    );
+  }
+
+  return <RegisterPage />;
 }
 
 export default App;

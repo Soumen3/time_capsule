@@ -159,7 +159,7 @@ const LoginPage = () => {
             </button> */}
 
             {/* Apple SSO Icon Button (Placeholder) */}
-            <button
+            {/* <button
               type="button"
               onClick={() => alert('Apple SSO not yet implemented')}
               disabled={loading}
@@ -167,7 +167,7 @@ const LoginPage = () => {
               title="Sign in with Apple"
             >
               <img src="/apple.png" alt="Apple" className="w-6 h-6" />
-            </button>
+            </button> */}
           </div>
 
           <p className="text-center text-gray-600 text-sm mt-8">
