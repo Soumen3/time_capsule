@@ -60,6 +60,7 @@ const PublicCapsuleViewPage = () => {
         setError('');
         const data = await capsuleService.getPublicCapsuleByToken(accessToken);
         setCapsule(data);
+        console.log('Public Capsule Data:', data);
       } catch (err) {
         setError(err.message || 'Could not load the time capsule. The link might be invalid or expired.');
         console.error(err);
@@ -115,13 +116,13 @@ const PublicCapsuleViewPage = () => {
       case 'image':
         return (
           <div className="mb-4 text-center">
-            <ImageRenderer src={item.file} alt={getCleanFilename(item.file) || 'Capsule image'} />
+            <ImageRenderer src={item.file_url} alt={getCleanFilename(item.file) || 'Capsule image'} />
           </div>
         );
       case 'video':
         return (
           <div className="mb-4">
-            <video controls src={item.file} className="w-full rounded-lg shadow-md" style={{ maxHeight: '500px' }}>
+            <video controls src={item.file_url} className="w-full rounded-lg shadow-md" style={{ maxHeight: '500px' }}>
               Your browser does not support the video tag.
             </video>
           </div>
@@ -129,7 +130,7 @@ const PublicCapsuleViewPage = () => {
       case 'audio':
         return (
           <div className="mb-4">
-            <audio controls src={item.file} className="w-full">
+            <audio controls src={item.file_url} className="w-full">
               Your browser does not support the audio element.
             </audio>
           </div>
@@ -137,7 +138,7 @@ const PublicCapsuleViewPage = () => {
       case 'document':
         return (
           <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md shadow-sm">
-            <a href={item.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium underline">
+            <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium underline">
               View Document: {getCleanFilename(item.file)}
             </a>
             <p className="text-sm text-gray-500 mt-1">Click to open the document in a new tab.</p>

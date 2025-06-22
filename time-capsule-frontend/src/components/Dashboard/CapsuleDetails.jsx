@@ -57,6 +57,7 @@ const CapsuleDetailsPage = () => {
       try {
         const data = await capsuleService.getCapsuleById(capsuleId);
         setCapsule(data);
+        console.log('Capsule details:', data);
       } catch (err) {
         setError(err.message || 'Failed to load capsule details.');
       } finally {
@@ -143,13 +144,13 @@ const CapsuleDetailsPage = () => {
                   <div className="mt-2">
                     {content.content_type === 'image' && (
                       <ImageWithLoader 
-                        src={content.file} 
+                        src={content.file_url} 
                         alt={getFilenameFromUrl(content.file)} 
                       />
                     )}
                     {content.content_type === 'video' && (
                       <video 
-                        src={content.file} 
+                        src={content.file_url} 
                         controls 
                         className="max-w-full rounded-md border shadow-sm"
                       >
@@ -158,7 +159,7 @@ const CapsuleDetailsPage = () => {
                     )}
                     {content.content_type === 'audio' && (
                       <audio 
-                        src={content.file} 
+                        src={content.file_url} 
                         controls 
                         className="w-full"
                       >
@@ -168,7 +169,7 @@ const CapsuleDetailsPage = () => {
                     {/* Link for non-previewable types or as a general download option */}
                     {(content.content_type === 'document' || !['image', 'video', 'audio', 'text'].includes(content.content_type)) && (
                       <a 
-                        href={content.file}
+                        href={content.file_url}
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="text-blue-600 hover:text-blue-800 hover:underline font-medium inline-flex items-center"

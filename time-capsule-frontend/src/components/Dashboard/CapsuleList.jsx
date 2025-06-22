@@ -10,7 +10,7 @@ const CapsuleList = ({ capsules, title, onDeleteSuccess }) => {
       <div className="text-center p-8 bg-white rounded-lg shadow-lg">
         <p className="text-xl text-gray-600 mb-6">You don't have any {title.toLowerCase()} capsules yet.</p>
         <Link to="/create-capsule">
-          <Button variant="primary">Create Your First Time Capsule</Button>
+          <Button variant="primary">Create Capsule</Button>
         </Link>
       </div>
     );
