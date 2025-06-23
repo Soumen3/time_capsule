@@ -71,7 +71,6 @@ const DashboardPage = () => {
   // For now, let's map backend fields to the frontend's expected 'status'.
   const processedCapsules = userCapsules.map(capsule => {
     let status = 'draft'; // Default status
-    console.log(capsule)
     if (capsule.is_delivered) {
       // Check if any recipient has opened the capsule
       const hasBeenOpened = capsule.recipients && capsule.recipients.some(
